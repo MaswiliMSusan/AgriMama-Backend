@@ -10,7 +10,7 @@ import sequelize from "../../config/database.js";
 
 async function run() {
   console.log(
-    "👩🏾 Testing AgriMama end-to-end farmer-message flow...\n"
+    "Testing AgriMama end-to-end farmer-message flow...\n"
   );
 
   let farmer;
@@ -34,7 +34,7 @@ async function run() {
       consentAt: new Date(),
     });
 
-    console.log("👩 Farmer created:", farmer.id);
+    console.log("Farmer created:", farmer.id);
 
     // --------------------------------------------------
     // 2. Create farm
@@ -62,7 +62,7 @@ async function run() {
       status: "active",
     });
 
-    console.log("🌽 Active crop created:", cropCycle.id);
+    console.log("Active crop created:", cropCycle.id);
 
     // --------------------------------------------------
     // 4. Farmer sends only the problem
@@ -70,10 +70,10 @@ async function run() {
     const message =
       "My maize leaves are being eaten by insects.";
 
-    console.log("\n💬 Farmer sends:");
+    console.log("Farmer sends:");
     console.log(`"${message}"`);
 
-    console.log("\n📡 Calling POST /api/messages...");
+    console.log("Calling POST /api/messages...");
 
     // --------------------------------------------------
     // 5. Call actual API
@@ -96,8 +96,8 @@ async function run() {
 
     const result = await response.json();
 
-    console.log("\n📥 API STATUS:", response.status);
-    console.log("\n📋 RESPONSE:");
+    console.log("API STATUS:", response.status);
+    console.log("RESPONSE:");
     console.dir(result, { depth: null });
 
     // --------------------------------------------------
@@ -207,30 +207,30 @@ async function run() {
     // --------------------------------------------------
     // 11. Report successful checks
     // --------------------------------------------------
-    console.log("\n✅ Farmer identity resolved.");
-    console.log("✅ Farm resolved automatically.");
-    console.log("✅ Active crop resolved automatically.");
-    console.log("✅ Farmer did not need to send farm/crop IDs.");
-    console.log("✅ AI interpreted the message as crop_health.");
-    console.log("✅ Original farmer message was saved.");
-    console.log("✅ Recommendation was generated.");
-    console.log("✅ Correct crop-health action selected.");
-    console.log("✅ Recommendation linked to the current observation.");
-    console.log("✅ Recommendation remains pending.");
-    console.log("✅ Human review is required.");
+    console.log("Farmer identity resolved.");
+    console.log("Farm resolved automatically.");
+    console.log("Active crop resolved automatically.");
+    console.log("Farmer did not need to send farm/crop IDs.");
+    console.log("AI interpreted the message as crop_health.");
+    console.log("Original farmer message was saved.");
+    console.log("Recommendation was generated.");
+    console.log("Correct crop-health action selected.");
+    console.log("Recommendation linked to the current observation.");
+    console.log("Recommendation remains pending.");
+    console.log("Human review is required.");
 
-    console.log("\n🎉 END-TO-END FARMER MESSAGE TEST PASSED!");
+    console.log("END-TO-END FARMER MESSAGE TEST PASSED!");
 
     testPassed = true;
   } catch (error) {
-    console.error("\n❌ END-TO-END FARMER MESSAGE TEST FAILED.");
+    console.error("END-TO-END FARMER MESSAGE TEST FAILED.");
     console.error(error);
     process.exitCode = 1;
   } finally {
     // --------------------------------------------------
     // 12. Clean up test records
     // --------------------------------------------------
-    console.log("\n🧹 Cleaning up test data...");
+    console.log("Cleaning up test data...");
 
     try {
       if (farmer) {
@@ -261,21 +261,21 @@ async function run() {
         });
       }
 
-      console.log("🧹 Test data cleaned up.");
+      console.log("Test data cleaned up.");
     } catch (cleanupError) {
-      console.error("⚠️ Test cleanup failed:", cleanupError);
+      console.error("Test cleanup failed:", cleanupError);
       process.exitCode = 1;
     }
 
     try {
       await sequelize.close();
     } catch (closeError) {
-      console.error("⚠️ Database connection close failed:", closeError);
+      console.error("Database connection close failed:", closeError);
       process.exitCode = 1;
     }
 
     if (!testPassed) {
-      console.log("ℹ️ Review the error above before rerunning the test.");
+      console.log("Review the error above before rerunning the test.");
     }
   }
 }

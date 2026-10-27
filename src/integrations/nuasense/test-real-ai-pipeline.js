@@ -10,7 +10,7 @@ import { interpretFarmerMessage } from "../../services/ai/interpreter.js";
 import { generateRecommendation } from "../../services/decisionEngine.js";
 
 async function run() {
-  console.log("🌱 Testing AgriMama REAL AI → Decision Engine pipeline...\n");
+  console.log("Testing AgriMama REAL AI → Decision Engine pipeline...\n");
 
   let farmer;
   let farm;
@@ -30,7 +30,7 @@ async function run() {
       consentAt: new Date(),
     });
 
-    console.log("👩 Farmer created:", farmer.id);
+    console.log("Farmer created:", farmer.id);
 
     // --------------------------------------------------
     // 2. Create test farm
@@ -44,7 +44,7 @@ async function run() {
       locationAccuracyMeters: 10,
     });
 
-    console.log("🌾 Farm created:", farm.id);
+    console.log("Farm created:", farm.id);
 
     // --------------------------------------------------
     // 3. Create maize crop cycle
@@ -58,7 +58,7 @@ async function run() {
       status: "active",
     });
 
-    console.log("🌽 Crop cycle created:", cropCycle.id);
+    console.log("Crop cycle created:", cropCycle.id);
 
     // --------------------------------------------------
     // 4. Farmer sends natural-language message
@@ -66,7 +66,7 @@ async function run() {
     const farmerMessage =
       "My maize leaves are being eaten by insects.";
 
-    console.log("\n💬 Farmer message:");
+    console.log("Farmer message:");
     console.log(`"${farmerMessage}"`);
 
     // --------------------------------------------------
@@ -81,7 +81,7 @@ async function run() {
       }
     );
 
-    console.log("\n🧠 REAL AI INTERPRETATION:");
+    console.log("REAL AI INTERPRETATION:");
     console.dir(interpretation, { depth: null });
 
     // --------------------------------------------------
@@ -119,7 +119,7 @@ async function run() {
       language: farmer.preferredLanguage,
     });
 
-    console.log("\n📝 Farmer observation created:");
+    console.log("Farmer observation created:");
     console.log(observation.id);
 
     // --------------------------------------------------
@@ -129,7 +129,7 @@ async function run() {
       cropCycle.id
     );
 
-    console.log("\n🌱 AGRIMAMA RECOMMENDATION:");
+    console.log("AGRIMAMA RECOMMENDATION:");
     console.dir(recommendation.toJSON(), { depth: null });
 
     // --------------------------------------------------
@@ -156,15 +156,15 @@ async function run() {
     }
 
     console.log(
-      "\n🔗 Observation → Recommendation link verified."
+      "Observation → Recommendation link verified."
     );
 
     console.log(
-      "\n✅ REAL AI END-TO-END PIPELINE TEST PASSED!"
+      "REAL AI END-TO-END PIPELINE TEST PASSED!"
     );
 
   } catch (error) {
-    console.error("\n❌ REAL AI PIPELINE TEST FAILED.");
+    console.error("REAL AI PIPELINE TEST FAILED.");
     console.error(error);
     process.exitCode = 1;
 
@@ -172,7 +172,7 @@ async function run() {
     // --------------------------------------------------
     // Cleanup test records
     // --------------------------------------------------
-    console.log("\n🧹 Cleaning up test data...");
+    console.log("Cleaning up test data...");
 
     if (recommendation) {
       await Recommendation.destroy({

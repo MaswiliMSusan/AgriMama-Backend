@@ -3,7 +3,7 @@ import "dotenv/config";
 import { interpretFarmerMessage } from "../../services/ai/interpreter.js";
 
 async function run() {
-  console.log("🌍 Testing AgriMama REAL AI with validated Dholuo...\n");
+  console.log("Testing AgriMama REAL AI with validated Dholuo...\n");
 
   // IMPORTANT:
   // Replace this with the exact Dholuo wording
@@ -11,7 +11,7 @@ async function run() {
   const message =
     "Kute chamo ite bando.";
 
-  console.log("💬 Dholuo farmer message:");
+  console.log("Dholuo farmer message:");
   console.log(`"${message}"`);
 
   const result = await interpretFarmerMessage(message, {
@@ -20,7 +20,7 @@ async function run() {
     language: "dholuo",
   });
 
-  console.log("\n🧠 AI INTERPRETATION:");
+  console.log("AI INTERPRETATION:");
 
   console.dir(result, {
     depth: null,
@@ -61,11 +61,11 @@ async function run() {
   }
 
   console.log(
-    "\n✅ Dholuo interpretation structure is valid."
+    "Dholuo interpretation structure is valid."
   );
 
   console.log(
-    "\n🔎 SEMANTIC REVIEW REQUIRED"
+    "SEMANTIC REVIEW REQUIRED"
   );
 
   console.log(
@@ -75,7 +75,7 @@ async function run() {
 
 run().catch((error) => {
   console.error(
-    "\n❌ Dholuo interpreter test failed."
+    "Dholuo interpreter test failed."
   );
 
   console.error(error);

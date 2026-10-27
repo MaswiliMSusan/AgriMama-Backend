@@ -2,10 +2,10 @@ import "dotenv/config";
 import { generateFarmerResponse } from "../../services/ai/responseGenerator.js";
 
 async function run() {
-  console.log("🗣️ Testing AgriMama farmer response generator...\n");
+  console.log("Testing AgriMama farmer response generator...\n");
 
   console.log(
-    `🤖 Model: ${
+    `Model: ${
       process.env.AI_SANDBOX_MODEL || "default"
     }\n`
   );
@@ -64,7 +64,7 @@ async function run() {
   // Generate Dholuo response
   // --------------------------------------------------
 
-  console.log("\n🌍 DHOLUO RESPONSE\n");
+  console.log("DHOLUO RESPONSE\n");
 
   const dholuoResponse = await generateFarmerResponse({
     recommendation,
@@ -104,11 +104,11 @@ async function run() {
     }
   }
 
-  console.log("\n✅ Response generator test passed!");
+  console.log("Response generator test passed!");
 }
 
 run().catch((error) => {
-  console.error("\n❌ Response generator test failed.");
+  console.error("Response generator test failed.");
   console.error("Error:", error.message);
   process.exit(1);
 });

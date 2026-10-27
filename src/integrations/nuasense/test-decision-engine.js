@@ -21,7 +21,7 @@ let recommendation;
 let farmWeatherStation;
 
 try {
-  console.log("🔄 Testing AgriMama context-aware decision engine...\n");
+  console.log("Testing AgriMama context-aware decision engine...\n");
 
   // --------------------------------------------------
   // 1. Create test farmer
@@ -35,7 +35,7 @@ try {
     consentAt: new Date(),
   });
 
-  console.log(`👩 Farmer: ${farmer.id}`);
+  console.log(`Farmer: ${farmer.id}`);
 
   // --------------------------------------------------
   // 2. Create test farm
@@ -50,7 +50,7 @@ try {
     locationAccuracyMeters: 10,
   });
 
-  console.log(`🌱 Farm: ${farm.id}`);
+  console.log(`Farm: ${farm.id}`);
 
   // --------------------------------------------------
   // 3. Create test crop cycle
@@ -65,13 +65,13 @@ try {
     status: "active",
   });
 
-  console.log(`🍠 Crop cycle: ${cropCycle.id}`);
+  console.log(`Crop cycle: ${cropCycle.id}`);
 
   // --------------------------------------------------
   // 4. Find existing NuaSense weather station
   // --------------------------------------------------
 
-  console.log("\n🌦️ Finding NuaSense weather station...");
+  console.log("Finding NuaSense weather station...");
 
   const gatewayId = process.env.NUASENSE_GATEWAY_ID;
 
@@ -93,13 +93,13 @@ try {
     );
   }
 
-  console.log(`🌦️ Weather station: ${weatherStation.id}`);
+  console.log(`Weather station: ${weatherStation.id}`);
 
   // --------------------------------------------------
   // 5. Link farm to weather station
   // --------------------------------------------------
 
-  console.log("\n🔗 Linking farm to weather station...");
+  console.log("Linking farm to weather station...");
 
   farmWeatherStation = await FarmWeatherStation.create({
     farmId: farm.id,
@@ -109,7 +109,7 @@ try {
   });
 
   console.log(
-    `🔗 Farm-weather relationship: ${farmWeatherStation.id}`
+    `Farm-weather relationship: ${farmWeatherStation.id}`
   );
 
   // --------------------------------------------------
@@ -128,17 +128,17 @@ try {
     language: "en",
   });
 
-  console.log(`📝 Observation: ${observation.id}`);
+  console.log(`Observation: ${observation.id}`);
 
   // --------------------------------------------------
   // 7. Build decision context
   // --------------------------------------------------
 
-  console.log("\n🧠 Building decision context...\n");
+  console.log("Building decision context...\n");
 
   const context = await buildDecisionContext(cropCycle.id);
 
-  console.log("📊 CONTEXT SUMMARY:");
+  console.log("CONTEXT SUMMARY:");
 
   console.log(`   Farmer: ${context.farmer?.name}`);
   console.log(`   Farm: ${context.farm?.name}`);
@@ -172,7 +172,7 @@ try {
 
   const latestWeather = context.weather[0];
 
-  console.log("\n🌦️ LATEST WEATHER:");
+  console.log("LATEST WEATHER:");
 
   console.log(`   Recorded: ${latestWeather.recordedAt}`);
   console.log(`   Temperature: ${latestWeather.temperature}`);
@@ -185,13 +185,13 @@ try {
   // 9. Generate recommendation
   // --------------------------------------------------
 
-  console.log("\n🧠 Generating recommendation...\n");
+  console.log("Generating recommendation...\n");
 
   recommendation = await generateRecommendation(
     cropCycle.id
   );
 
-  console.log("💡 GENERATED RECOMMENDATION:");
+  console.log("GENERATED RECOMMENDATION:");
 
   console.log(
     JSON.stringify(
@@ -272,12 +272,12 @@ try {
   }
 
   console.log(
-    "\n🌦️ Weather context was successfully used by the decision engine."
+    "Weather context was successfully used by the decision engine."
   );
 
-  console.log("\n✅ Context-aware decision engine test passed!");
+  console.log("Context-aware decision engine test passed!");
 } catch (error) {
-  console.error("\n❌ Context-aware decision engine test failed:");
+  console.error("Context-aware decision engine test failed:");
   console.error(error);
   process.exitCode = 1;
 } finally {
@@ -285,40 +285,40 @@ try {
   // 12. Cleanup
   // --------------------------------------------------
 
-  console.log("\n🧹 Cleaning up test data...");
+  console.log("Cleaning up test data...");
 
   try {
     if (recommendation) {
       await recommendation.destroy();
-      console.log("🧹 Test recommendation removed.");
+      console.log("Test recommendation removed.");
     }
 
     if (observation) {
       await observation.destroy();
-      console.log("🧹 Test observation removed.");
+      console.log("Test observation removed.");
     }
 
     if (farmWeatherStation) {
       await farmWeatherStation.destroy();
-      console.log("🧹 Test farm-weather relationship removed.");
+      console.log("Test farm-weather relationship removed.");
     }
 
     if (cropCycle) {
       await cropCycle.destroy();
-      console.log("🧹 Test crop cycle removed.");
+      console.log("Test crop cycle removed.");
     }
 
     if (farm) {
       await farm.destroy();
-      console.log("🧹 Test farm removed.");
+      console.log("Test farm removed.");
     }
 
     if (farmer) {
       await farmer.destroy();
-      console.log("🧹 Test farmer removed.");
+      console.log("Test farmer removed.");
     }
   } catch (cleanupError) {
-    console.error("⚠️ Cleanup failed:");
+    console.error("Cleanup failed:");
     console.error(cleanupError);
   }
 

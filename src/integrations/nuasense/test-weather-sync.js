@@ -4,7 +4,7 @@ import WeatherObservation from "../../models/weatherObservation.js";
 import { syncWeatherData } from "./service.js";
 
 async function run() {
-  console.log("🌦️ Testing REAL NuaSense → PostgreSQL ingestion...\n");
+  console.log("Testing REAL NuaSense → PostgreSQL ingestion...\n");
 
   try {
     const gatewayId = process.env.NUASENSE_GATEWAY_ID;
@@ -32,7 +32,7 @@ async function run() {
       start: "-24h",
     });
 
-    console.log("\n📊 SYNC RESULT:");
+    console.log("SYNC RESULT:");
     console.dir(result, { depth: null });
 
     // Count observations after sync
@@ -82,7 +82,7 @@ async function run() {
       });
 
     console.log(
-      "\n🌦️ LATEST DATABASE OBSERVATIONS:"
+      "LATEST DATABASE OBSERVATIONS:"
     );
 
     console.dir(
@@ -128,20 +128,20 @@ async function run() {
     }
 
     console.log(
-      "\n✅ Real NuaSense data successfully reached PostgreSQL."
+      "Real NuaSense data successfully reached PostgreSQL."
     );
 
     console.log(
-      "\n🔗 NuaSense → Mapper → WeatherObservation verified."
+      "NuaSense → Mapper → WeatherObservation verified."
     );
 
     console.log(
-      "\n🌦️ REAL NuaSense WEATHER SYNC TEST PASSED!"
+      "REAL NuaSense WEATHER SYNC TEST PASSED!"
     );
 
   } catch (error) {
     console.error(
-      "\n❌ NuaSense weather sync test failed."
+      "NuaSense weather sync test failed."
     );
 
     console.error(error);

@@ -55,16 +55,16 @@ const tests = [
 ];
 
 async function run() {
-  console.log("🌍 AgriMama AI Interpreter Test Suite");
-  console.log(`🤖 Model: ${MODEL}\n`);
+  console.log("AgriMama AI Interpreter Test Suite");
+  console.log(`Model: ${MODEL}\n`);
 
   let passed = 0;
   let failed = 0;
 
   for (const test of tests) {
     console.log("=".repeat(70));
-    console.log(`🧪 ${test.name}`);
-    console.log(`💬 "${test.message}"`);
+    console.log(` ${test.name}`);
+    console.log(`"${test.message}"`);
 
     try {
       const result = await interpretFarmerMessage(
@@ -72,7 +72,7 @@ async function run() {
         test.context
       );
 
-      console.log("\n🧠 Interpretation:");
+      console.log("Interpretation:");
       console.dir(result, { depth: null });
 
       // ---------------------------------------------
@@ -181,17 +181,17 @@ async function run() {
         }
       }
 
-      console.log("\n✅ PASSED");
+      console.log("PASSED");
       passed++;
     } catch (error) {
-      console.error("\n❌ FAILED");
+      console.error(" FAILED");
       console.error(error.message);
       failed++;
     }
   }
 
   console.log("\n" + "=".repeat(70));
-  console.log("📊 TEST SUMMARY");
+  console.log("TEST SUMMARY");
   console.log("=".repeat(70));
 
   console.log(`Total:  ${tests.length}`);
@@ -202,11 +202,11 @@ async function run() {
     process.exit(1);
   }
 
-  console.log("\n🎉 All interpreter tests passed!");
+  console.log("All interpreter tests passed!");
 }
 
 run().catch((error) => {
-  console.error("\n❌ Interpreter test suite failed.");
+  console.error("Interpreter test suite failed.");
   console.error(error);
   process.exit(1);
 });

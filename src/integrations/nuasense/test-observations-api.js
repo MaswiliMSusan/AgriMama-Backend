@@ -7,7 +7,7 @@ import FarmerObservation from "../../models/farmerObservation.js";
 import Recommendation from "../../models/recommendation.js";
 
 async function run() {
-  console.log("🌱 Testing AgriMama POST /api/observations...\n");
+  console.log("Testing AgriMama POST /api/observations...\n");
 
   let farmer;
   let farm;
@@ -25,7 +25,7 @@ async function run() {
       consentAt: new Date(),
     });
 
-    console.log("👩 Farmer created:", farmer.id);
+    console.log("Farmer created:", farmer.id);
 
     // --------------------------------------------------
     // 2. Create temporary farm
@@ -39,7 +39,7 @@ async function run() {
       locationAccuracyMeters: 10,
     });
 
-    console.log("🌾 Farm created:", farm.id);
+    console.log("Farm created:", farm.id);
 
     // --------------------------------------------------
     // 3. Create maize crop cycle
@@ -53,7 +53,7 @@ async function run() {
       status: "active",
     });
 
-    console.log("🌽 Crop cycle created:", cropCycle.id);
+    console.log("Crop cycle created:", cropCycle.id);
 
     // --------------------------------------------------
     // 4. Farmer message
@@ -61,13 +61,13 @@ async function run() {
     const farmerMessage =
       "My maize leaves are being eaten by insects.";
 
-    console.log("\n💬 Farmer message:");
+    console.log("Farmer message:");
     console.log(`"${farmerMessage}"`);
 
     // --------------------------------------------------
     // 5. Call the REAL API endpoint
     // --------------------------------------------------
-    console.log("\n📡 Sending request to POST /api/observations...");
+    console.log("Sending request to POST /api/observations...");
 
     const response = await fetch(
       "http://localhost:7000/api/observations",
@@ -88,9 +88,9 @@ async function run() {
 
     const result = await response.json();
 
-    console.log("\n📥 API STATUS:", response.status);
+    console.log("API STATUS:", response.status);
 
-    console.log("\n📋 API RESPONSE:");
+    console.log("API RESPONSE:");
     console.dir(result, { depth: null });
 
     // --------------------------------------------------
@@ -134,7 +134,7 @@ async function run() {
     }
 
     console.log(
-      "\n🧠 Real AI interpretation verified."
+      "Real AI interpretation verified."
     );
 
     // --------------------------------------------------
@@ -162,7 +162,7 @@ async function run() {
     }
 
     console.log(
-      "📝 Farmer observation verified."
+      "Farmer observation verified."
     );
 
     // --------------------------------------------------
@@ -198,13 +198,13 @@ async function run() {
     }
 
     console.log(
-      "🌱 Recommendation verified."
+      "Recommendation verified."
     );
 
     // --------------------------------------------------
     // 10. Print final result
     // --------------------------------------------------
-    console.log("\n🔗 PIPELINE VERIFIED:");
+    console.log("PIPELINE VERIFIED:");
 
     console.log(
       `Farmer message → ${result.interpretation.category}`
@@ -223,12 +223,12 @@ async function run() {
     );
 
     console.log(
-      "\n✅ POST /api/observations END-TO-END TEST PASSED!"
+      "POST /api/observations END-TO-END TEST PASSED!"
     );
 
   } catch (error) {
     console.error(
-      "\n❌ API PIPELINE TEST FAILED."
+      "API PIPELINE TEST FAILED."
     );
 
     console.error(error);
@@ -239,7 +239,7 @@ async function run() {
     // --------------------------------------------------
     // Cleanup
     // --------------------------------------------------
-    console.log("\n🧹 Cleaning up test data...");
+    console.log(" Cleaning up test data...");
 
     if (farmer) {
       // Recommendations and observations cascade

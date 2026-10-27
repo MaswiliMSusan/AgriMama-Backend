@@ -11,7 +11,7 @@ import Recommendation from "../../models/recommendation.js";
 
 async function run() {
   console.log(
-    "🌦️ Testing REAL AI + NuaSense weather + Decision Engine...\n"
+    "Testing REAL AI + NuaSense weather + Decision Engine...\n"
   );
 
   let farmer;
@@ -33,7 +33,7 @@ async function run() {
       consentAt: new Date(),
     });
 
-    console.log("👩 Farmer created:", farmer.id);
+    console.log("Farmer created:", farmer.id);
 
     // --------------------------------------------------
     // 2. Create temporary farm
@@ -47,7 +47,7 @@ async function run() {
       locationAccuracyMeters: 10,
     });
 
-    console.log("🌾 Farm created:", farm.id);
+    console.log("Farm created:", farm.id);
 
     // --------------------------------------------------
     // 3. Create maize crop cycle
@@ -61,7 +61,7 @@ async function run() {
       status: "active",
     });
 
-    console.log("🌽 Crop cycle created:", cropCycle.id);
+    console.log("Crop cycle created:", cropCycle.id);
 
     // --------------------------------------------------
     // 4. Create temporary weather station
@@ -75,7 +75,7 @@ async function run() {
     });
 
     console.log(
-      "🌦️ Weather station created:",
+      "Weather station created:",
       weatherStation.id
     );
 
@@ -90,7 +90,7 @@ async function run() {
     });
 
     console.log(
-      "🔗 Weather station linked to farm."
+      "Weather station linked to farm."
     );
 
     // --------------------------------------------------
@@ -116,7 +116,7 @@ async function run() {
     });
 
     console.log(
-      "📡 Weather observation created:",
+      "Weather observation created:",
       weatherObservation.id
     );
 
@@ -126,14 +126,14 @@ async function run() {
     const farmerMessage =
       "The rain has stopped and my young maize is starting to dry.";
 
-    console.log("\n💬 Farmer message:");
+    console.log("Farmer message:");
     console.log(`"${farmerMessage}"`);
 
     // --------------------------------------------------
     // 8. Call actual API
     // --------------------------------------------------
     console.log(
-      "\n📡 Sending request to POST /api/observations..."
+      "Sending request to POST /api/observations..."
     );
 
     const response = await fetch(
@@ -155,9 +155,9 @@ async function run() {
 
     const result = await response.json();
 
-    console.log("\n📥 API STATUS:", response.status);
+    console.log("API STATUS:", response.status);
 
-    console.log("\n📋 API RESPONSE:");
+    console.log("API RESPONSE:");
     console.dir(result, { depth: null });
 
     // --------------------------------------------------
@@ -185,7 +185,7 @@ async function run() {
     }
 
     console.log(
-      "\n🧠 REAL AI INTERPRETATION:"
+      "REAL AI INTERPRETATION:"
     );
 
     console.dir(result.interpretation, {
@@ -209,7 +209,7 @@ async function run() {
     }
 
     console.log(
-      "✅ Real AI correctly classified the message as weather."
+      "Real AI correctly classified the message as weather."
     );
 
     // --------------------------------------------------
@@ -228,7 +228,7 @@ async function run() {
     }
 
     console.log(
-      "📝 Farmer weather observation verified."
+      "Farmer weather observation verified."
     );
 
     // --------------------------------------------------
@@ -241,7 +241,7 @@ async function run() {
     }
 
     console.log(
-      "\n🌱 WEATHER RECOMMENDATION:"
+      "WEATHER RECOMMENDATION:"
     );
 
     console.dir(result.recommendation, {
@@ -275,14 +275,14 @@ async function run() {
     }
 
     console.log(
-      "\n🔗 Observation → Weather rule → Recommendation verified."
+      "Observation → Weather rule → Recommendation verified."
     );
 
     // --------------------------------------------------
     // 13. Verify NuaSense/weather context directly
     // --------------------------------------------------
     console.log(
-      "\n📡 NuaSense weather context:"
+      "NuaSense weather context:"
     );
 
     console.log({
@@ -293,12 +293,12 @@ async function run() {
     });
 
     console.log(
-      "\n🌦️ REAL AI + WEATHER + DECISION PIPELINE PASSED!"
+      "REAL AI + WEATHER + DECISION PIPELINE PASSED!"
     );
 
   } catch (error) {
     console.error(
-      "\n❌ WEATHER PIPELINE TEST FAILED."
+      "WEATHER PIPELINE TEST FAILED."
     );
 
     console.error(error);
@@ -310,7 +310,7 @@ async function run() {
     // Cleanup
     // --------------------------------------------------
     console.log(
-      "\n🧹 Cleaning up test data..."
+      "Cleaning up test data..."
     );
 
     if (farmer) {

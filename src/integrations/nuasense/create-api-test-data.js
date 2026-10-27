@@ -94,14 +94,14 @@ async function createTestData() {
     console.log(observation.id);
 
     console.log(
-      "\n⚠️ This data is intentionally NOT deleted."
+      "This data is intentionally NOT deleted."
     );
 
     console.log(
       "We will use it to test POST /api/decisions."
     );
   } catch (error) {
-    console.error("❌ Failed to create API test data.");
+    console.error("Failed to create API test data.");
     console.error(error);
     process.exitCode = 1;
   } finally {

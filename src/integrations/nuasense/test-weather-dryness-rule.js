@@ -59,7 +59,7 @@ function testDryWeatherObservation() {
     throw new Error("Expected recommendation to require human review.");
   }
 
-  console.log("✓ Dry weather observation test passed.");
+  console.log("Dry weather observation test passed.");
   console.log("Decision:");
   console.log(decision);
 }
@@ -103,7 +103,7 @@ function testCropHealthObservationIsIgnored() {
     );
   }
 
-  console.log("✓ Crop-health observation test passed.");
+  console.log("Crop-health observation test passed.");
 }
 
 function testWeatherObservationWithoutDrynessIsIgnored() {
@@ -145,19 +145,19 @@ function testWeatherObservationWithoutDrynessIsIgnored() {
     );
   }
 
-  console.log("✓ Non-dry weather observation test passed.");
+  console.log("Non-dry weather observation test passed.");
 }
 
 try {
-  console.log("\nRunning weather dryness rule tests...\n");
+  console.log("Running weather dryness rule tests...\n");
 
   testDryWeatherObservation();
   testCropHealthObservationIsIgnored();
   testWeatherObservationWithoutDrynessIsIgnored();
 
-  console.log("\n✓ All weather dryness rule tests passed.\n");
+  console.log("All weather dryness rule tests passed.\n");
 } catch (error) {
-  console.error("\n✗ Weather dryness rule test failed.");
+  console.error("Weather dryness rule test failed.");
   console.error(error);
   process.exit(1);
 }

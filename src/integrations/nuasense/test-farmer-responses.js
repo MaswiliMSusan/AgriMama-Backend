@@ -3,7 +3,7 @@ import {
 } from "../../services/responses/farmerResponses.js";
 
 function run() {
-  console.log("🗣️ Testing AgriMama farmer response templates...\n");
+  console.log("Testing AgriMama farmer response templates...\n");
 
   // --------------------------------------------------
   // English
@@ -38,7 +38,7 @@ function run() {
     "dholuo"
   );
 
-  console.log("\n🌍 DHOLUO:");
+  console.log("DHOLUO:");
   console.log(dholuo);
 
   if (dholuo.status !== "translation_unavailable") {
@@ -61,7 +61,7 @@ function run() {
   } catch (error) {
     unknownActionFailed = true;
     console.log(
-      "\n✅ Unknown action correctly rejected."
+      "Unknown action correctly rejected."
     );
   }
 
@@ -72,7 +72,7 @@ function run() {
   }
 
   console.log(
-    "\n✅ Farmer response template tests passed!"
+    "Farmer response template tests passed!"
   );
 }
 
@@ -80,7 +80,7 @@ try {
   run();
 } catch (error) {
   console.error(
-    "\n❌ Farmer response template test failed."
+    "Farmer response template test failed."
   );
 
   console.error(

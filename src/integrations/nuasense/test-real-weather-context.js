@@ -14,7 +14,7 @@ import { evaluateRules, selectPrimaryDecision } from "../../services/ruleEngine.
 
 async function run() {
   console.log(
-    "🌦️ Testing REAL STORED NuaSense weather → Decision Context...\n"
+    "Testing REAL STORED NuaSense weather → Decision Context...\n"
   );
 
   let farmer;
@@ -43,7 +43,7 @@ async function run() {
     }
 
     console.log(
-      "🌦️ Existing NuaSense station:",
+      "Existing NuaSense station:",
       weatherStation.id
     );
 
@@ -57,7 +57,7 @@ async function run() {
     });
 
     console.log(
-      `📡 Stored weather observations: ${weatherCount}`
+      `Stored weather observations: ${weatherCount}`
     );
 
     if (weatherCount === 0) {
@@ -73,7 +73,7 @@ async function run() {
       order: [["recordedAt", "DESC"]],
     });
 
-    console.log("\n🌦️ Latest stored weather:");
+    console.log("Latest stored weather:");
 
     console.dir(latestWeather.toJSON(), {
       depth: null,
@@ -91,7 +91,7 @@ async function run() {
     });
 
     console.log(
-      "\n👩 Farmer created:",
+      "Farmer created:",
       farmer.id
     );
 
@@ -108,7 +108,7 @@ async function run() {
     });
 
     console.log(
-      "🌾 Farm created:",
+      "Farm created:",
       farm.id
     );
 
@@ -124,7 +124,7 @@ async function run() {
       });
 
     console.log(
-      "🔗 Real NuaSense station linked to test farm."
+      "Real NuaSense station linked to test farm."
     );
 
     // --------------------------------------------------
@@ -140,7 +140,7 @@ async function run() {
     });
 
     console.log(
-      "🌽 Crop cycle created:",
+      "Crop cycle created:",
       cropCycle.id
     );
 
@@ -165,7 +165,7 @@ async function run() {
       });
 
     console.log(
-      "📝 Farmer observation created:",
+      "Farmer observation created:",
       farmerObservation.id
     );
 
@@ -179,7 +179,7 @@ async function run() {
     // from PostgreSQL.
     // --------------------------------------------------
     console.log(
-      "\n🧠 Building AgriMama decision context..."
+      "Building AgriMama decision context..."
     );
 
     const context =
@@ -188,7 +188,7 @@ async function run() {
       );
 
     console.log(
-      "\n📋 DECISION CONTEXT:"
+      "DECISION CONTEXT:"
     );
 
     console.dir(
@@ -225,7 +225,7 @@ async function run() {
     }
 
     console.log(
-      "\n✅ Stored NuaSense weather successfully entered decision context."
+      "Stored NuaSense weather successfully entered decision context."
     );
 
     // --------------------------------------------------
@@ -235,7 +235,7 @@ async function run() {
       evaluateRules(context);
 
     console.log(
-      "\n🧠 MATCHED RULES:"
+      "MATCHED RULES:"
     );
 
     console.dir(
@@ -255,7 +255,7 @@ async function run() {
     }
 
     console.log(
-      "\n🌱 PRIMARY DECISION:"
+      "PRIMARY DECISION:"
     );
 
     console.dir(
@@ -293,16 +293,16 @@ async function run() {
     }
 
     console.log(
-      "\n🔗 Weather observation + farmer observation + decision rule verified."
+      "Weather observation + farmer observation + decision rule verified."
     );
 
     console.log(
-      "\n🌦️ REAL STORED NuaSense WEATHER CONTEXT TEST PASSED!"
+      "REAL STORED NuaSense WEATHER CONTEXT TEST PASSED!"
     );
 
   } catch (error) {
     console.error(
-      "\n❌ REAL WEATHER CONTEXT TEST FAILED."
+      "REAL WEATHER CONTEXT TEST FAILED."
     );
 
     console.error(error);
@@ -317,7 +317,7 @@ async function run() {
     // WeatherObservation records are NOT deleted.
     // --------------------------------------------------
     console.log(
-      "\n🧹 Cleaning up temporary test data..."
+      "Cleaning up temporary test data..."
     );
 
     if (recommendation) {

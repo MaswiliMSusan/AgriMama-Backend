@@ -20,7 +20,7 @@ async function runTest() {
 
   try {
     console.log(
-      "🔄 Testing current weather observation against older crop-health history...\n"
+      "Testing current weather observation against older crop-health history...\n"
     );
 
     // 1. Create test farmer.
@@ -32,7 +32,7 @@ async function runTest() {
       consentAt: new Date(),
     });
 
-    console.log(`👩 Farmer: ${farmer.id}`);
+    console.log(`Farmer: ${farmer.id}`);
 
     // 2. Create test farm.
     farm = await Farm.create({
@@ -43,7 +43,7 @@ async function runTest() {
       longitude: 34.75,
     });
 
-    console.log(`🌱 Farm: ${farm.id}`);
+    console.log(`Farm: ${farm.id}`);
 
     // 3. Create maize crop cycle.
     cropCycle = await CropCycle.create({
@@ -55,10 +55,10 @@ async function runTest() {
       status: "active",
     });
 
-    console.log(`🌽 Crop cycle: ${cropCycle.id}`);
+    console.log(`Crop cycle: ${cropCycle.id}`);
 
     // 4. Find existing NuaSense weather station.
-    console.log("\n🌦️ Finding NuaSense weather station...");
+    console.log("Finding NuaSense weather station...");
 
     const weatherStation = await WeatherStation.findOne({
       where: {
@@ -71,7 +71,7 @@ async function runTest() {
       throw new Error("NuaSense weather station was not found.");
     }
 
-    console.log(`🌦️ Weather station: ${weatherStation.id}`);
+    console.log(`Weather station: ${weatherStation.id}`);
 
     // 5. Link farm to weather station.
     farmWeatherStation = await FarmWeatherStation.create({
@@ -82,7 +82,7 @@ async function runTest() {
     });
 
     console.log(
-      `🔗 Farm-weather relationship: ${farmWeatherStation.id}`
+      `Farm-weather relationship: ${farmWeatherStation.id}`
     );
 
     // 6. Create an older crop-health observation.
@@ -99,7 +99,7 @@ async function runTest() {
     });
 
     console.log(
-      `🐛 Older crop-health observation: ${oldCropHealthObservation.id}`
+      `Older crop-health observation: ${oldCropHealthObservation.id}`
     );
 
     // 7. Create the current weather observation.
@@ -115,11 +115,11 @@ async function runTest() {
       language: "en",
     });
 
-    console.log(`📝 Current weather observation: ${observation.id}`);
+    console.log(`Current weather observation: ${observation.id}`);
 
     // 8. Generate a recommendation for the CURRENT observation.
     console.log(
-      "\n🧠 Generating recommendation for the current weather observation...\n"
+      "Generating recommendation for the current weather observation...\n"
     );
 
     recommendation = await generateRecommendation(
@@ -127,7 +127,7 @@ async function runTest() {
       observation.id
     );
 
-    console.log("💡 GENERATED RECOMMENDATION:");
+    console.log("GENERATED RECOMMENDATION:");
     console.log(JSON.stringify(recommendation.toJSON(), null, 2));
 
     // 9. Assert that the recommendation uses the current observation.
@@ -202,67 +202,67 @@ async function runTest() {
     }
 
     console.log(
-      "\n✅ Current weather observation correctly selected."
+      "Current weather observation correctly selected."
     );
 
     console.log(
-      "✅ Older crop-health observation did not override the current message."
+      "Older crop-health observation did not override the current message."
     );
 
     console.log(
-      "✅ Soil-moisture action code and observation linkage verified."
+      "Soil-moisture action code and observation linkage verified."
     );
 
     console.log(
-      "\n🎉 Weather conflict decision-engine test passed!"
+      " Weather conflict decision-engine test passed!"
     );
   } catch (error) {
     console.error(
-      "\n❌ Weather conflict decision-engine test failed."
+      "Weather conflict decision-engine test failed."
     );
     console.error(error);
     process.exitCode = 1;
   } finally {
     // Clean up test data.
-    console.log("\n🧹 Cleaning up test data...");
+    console.log("Cleaning up test data...");
 
     try {
       if (recommendation) {
         await recommendation.destroy();
-        console.log("🧹 Test recommendation removed.");
+        console.log("Test recommendation removed.");
       }
 
       if (observation) {
         await observation.destroy();
-        console.log("🧹 Current weather observation removed.");
+        console.log("Current weather observation removed.");
       }
 
       if (oldCropHealthObservation) {
         await oldCropHealthObservation.destroy();
-        console.log("🧹 Older crop-health observation removed.");
+        console.log("Older crop-health observation removed.");
       }
 
       if (farmWeatherStation) {
         await farmWeatherStation.destroy();
-        console.log("🧹 Test farm-weather relationship removed.");
+        console.log("Test farm-weather relationship removed.");
       }
 
       if (cropCycle) {
         await cropCycle.destroy();
-        console.log("🧹 Test crop cycle removed.");
+        console.log("Test crop cycle removed.");
       }
 
       if (farm) {
         await farm.destroy();
-        console.log("🧹 Test farm removed.");
+        console.log("Test farm removed.");
       }
 
       if (farmer) {
         await farmer.destroy();
-        console.log("🧹 Test farmer removed.");
+        console.log("Test farmer removed.");
       }
     } catch (cleanupError) {
-      console.error("❌ Test cleanup failed:", cleanupError);
+      console.error("Test cleanup failed:", cleanupError);
       process.exitCode = 1;
     }
 

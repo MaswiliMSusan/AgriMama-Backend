@@ -19,7 +19,7 @@ async function testCropHealthConflictDecisionEngine() {
 
   try {
     console.log(
-      "🔄 Testing current crop-health observation against older weather history...\n"
+      "Testing current crop-health observation against older weather history...\n"
     );
 
     await sequelize.authenticate();
@@ -46,12 +46,12 @@ async function testCropHealthConflictDecisionEngine() {
       plantingDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     });
 
-    console.log(`👩 Farmer: ${farmer.id}`);
-    console.log(`🌱 Farm: ${farm.id}`);
-    console.log(`🌽 Crop cycle: ${cropCycle.id}\n`);
+    console.log(`Farmer: ${farmer.id}`);
+    console.log(`Farm: ${farm.id}`);
+    console.log(`Crop cycle: ${cropCycle.id}\n`);
 
     // 2. Find the existing NuaSense weather station.
-    console.log("🌦️ Finding NuaSense weather station...");
+    console.log("Finding NuaSense weather station...");
 
     const weatherStation = await WeatherStation.findOne({
       where: {
@@ -65,7 +65,7 @@ async function testCropHealthConflictDecisionEngine() {
       );
     }
 
-    console.log(`🌦️ Weather station: ${weatherStation.id}`);
+    console.log(`Weather station: ${weatherStation.id}`);
 
     // 3. Link the test farm to the weather station.
     farmWeatherStation = await FarmWeatherStation.create({
@@ -75,7 +75,7 @@ async function testCropHealthConflictDecisionEngine() {
       active: true,
     });
 
-    console.log(`🔗 Farm-weather relationship: ${farmWeatherStation.id}`);
+    console.log(`Farm-weather relationship: ${farmWeatherStation.id}`);
 
     // 4. Create an older weather observation.
     oldWeatherObservation = await FarmerObservation.create({
@@ -90,7 +90,7 @@ async function testCropHealthConflictDecisionEngine() {
       language: "en",
     });
 
-    console.log(`🌦️ Older weather observation: ${oldWeatherObservation.id}`);
+    console.log(`Older weather observation: ${oldWeatherObservation.id}`);
 
     // 5. Create the current crop-health observation.
     currentCropHealthObservation = await FarmerObservation.create({
@@ -110,14 +110,14 @@ async function testCropHealthConflictDecisionEngine() {
     );
 
     // 6. Generate the decision using the CURRENT observation ID.
-    console.log("🧠 Generating recommendation for the current crop-health report...\n");
+    console.log("Generating recommendation for the current crop-health report...\n");
 
     recommendation = await generateRecommendation(
       cropCycle.id,
       currentCropHealthObservation.id
     );
 
-    console.log("💡 GENERATED RECOMMENDATION:");
+    console.log("GENERATED RECOMMENDATION:");
     console.log(JSON.stringify(recommendation.toJSON(), null, 2));
     console.log("");
 
@@ -178,64 +178,64 @@ async function testCropHealthConflictDecisionEngine() {
       "\n🎉 Crop-health conflict decision-engine test passed!"
     );
   } catch (error) {
-    console.error("\n❌ Crop-health conflict decision-engine test failed:");
+    console.error("Crop-health conflict decision-engine test failed:");
     console.error(error.message);
     process.exitCode = 1;
   } finally {
     // 8. Clean up only the records created by this test.
-    console.log("\n🧹 Cleaning up test data...");
+    console.log("Cleaning up test data...");
 
     try {
       if (recommendation) {
         await Recommendation.destroy({
           where: { id: recommendation.id },
         });
-        console.log("🧹 Test recommendation removed.");
+        console.log("Test recommendation removed.");
       }
 
       if (currentCropHealthObservation) {
         await FarmerObservation.destroy({
           where: { id: currentCropHealthObservation.id },
         });
-        console.log("🧹 Current crop-health observation removed.");
+        console.log("Current crop-health observation removed.");
       }
 
       if (oldWeatherObservation) {
         await FarmerObservation.destroy({
           where: { id: oldWeatherObservation.id },
         });
-        console.log("🧹 Older weather observation removed.");
+        console.log("Older weather observation removed.");
       }
 
       if (farmWeatherStation) {
         await FarmWeatherStation.destroy({
           where: { id: farmWeatherStation.id },
         });
-        console.log("🧹 Test farm-weather relationship removed.");
+        console.log("Test farm-weather relationship removed.");
       }
 
       if (cropCycle) {
         await CropCycle.destroy({
           where: { id: cropCycle.id },
         });
-        console.log("🧹 Test crop cycle removed.");
+        console.log("Test crop cycle removed.");
       }
 
       if (farm) {
         await Farm.destroy({
           where: { id: farm.id },
         });
-        console.log("🧹 Test farm removed.");
+        console.log("Test farm removed.");
       }
 
       if (farmer) {
         await Farmer.destroy({
           where: { id: farmer.id },
         });
-        console.log("🧹 Test farmer removed.");
+        console.log(" Test farmer removed.");
       }
     } catch (cleanupError) {
-      console.error("⚠️ Test cleanup encountered an error:");
+      console.error("Test cleanup encountered an error:");
       console.error(cleanupError.message);
       process.exitCode = 1;
     }

@@ -112,9 +112,9 @@ try {
   testCropHealthObservation();
   testWeatherObservationIsIgnored();
 
-  console.log("\n✓ All crop health rule tests passed.\n");
+  console.log("All crop health rule tests passed.\n");
 } catch (error) {
-  console.error("\n✗ Crop health rule test failed.");
+  console.error("Crop health rule test failed.");
   console.error(error);
   process.exit(1);
 }

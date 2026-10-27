@@ -53,11 +53,11 @@ const context = {
   ],
 };
 
-console.log("🧠 Testing AgriMama rule engine...\n");
+console.log("Testing AgriMama rule engine...\n");
 
 const matchedRules = evaluateRules(context);
 
-console.log("📋 MATCHED RULES:");
+console.log("MATCHED RULES:");
 
 for (const rule of matchedRules) {
   console.log(`   - ${rule.name} (priority ${rule.priority})`);
@@ -85,7 +85,7 @@ if (!weatherDrynessMatch) {
   throw new Error("Weather dryness rule did not match.");
 }
 
-console.log("\n✓ Both rules matched successfully.");
+console.log("Both rules matched successfully.");
 
 const primaryDecision = selectPrimaryDecision(matchedRules);
 
@@ -93,7 +93,7 @@ if (!primaryDecision) {
   throw new Error("No primary decision was selected.");
 }
 
-console.log("\n🎯 PRIMARY DECISION:");
+console.log("PRIMARY DECISION:");
 console.log(primaryDecision);
 
 if (primaryDecision.source !== "AgriMama crop health rule") {
@@ -103,9 +103,9 @@ if (primaryDecision.source !== "AgriMama crop health rule") {
 }
 
 console.log(
-  "\n✓ Crop health rule was selected as the primary decision."
+  "Crop health rule was selected as the primary decision."
 );
 
 console.log(
-  "\n✅ Rule engine multi-match test passed!"
+  "Rule engine multi-match test passed!"
 );

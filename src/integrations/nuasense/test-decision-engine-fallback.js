@@ -17,7 +17,7 @@ async function testDecisionEngineFallback() {
 
   try {
     console.log(
-      "🔄 Testing fallback for a current observation that matches no decision rule...\n"
+      "Testing fallback for a current observation that matches no decision rule...\n"
     );
 
     await sequelize.authenticate();
@@ -42,9 +42,9 @@ async function testDecisionEngineFallback() {
       status: "active",
     });
 
-    console.log(`👩 Farmer: ${farmer.id}`);
-    console.log(`🌱 Farm: ${farm.id}`);
-    console.log(`🌽 Crop cycle: ${cropCycle.id}\n`);
+    console.log(`Farmer: ${farmer.id}`);
+    console.log(`Farm: ${farm.id}`);
+    console.log(`Crop cycle: ${cropCycle.id}\n`);
 
     // 2. Add an older crop-health observation that could match a rule.
     oldCropHealthObservation = await FarmerObservation.create({
@@ -60,7 +60,7 @@ async function testDecisionEngineFallback() {
     });
 
     console.log(
-      `🐛 Older crop-health observation: ${oldCropHealthObservation.id}`
+      `Older crop-health observation: ${oldCropHealthObservation.id}`
     );
 
     // 3. Add a current general observation.
@@ -76,18 +76,18 @@ async function testDecisionEngineFallback() {
     });
 
     console.log(
-      `📝 Current general observation: ${currentGeneralObservation.id}\n`
+      `Current general observation: ${currentGeneralObservation.id}\n`
     );
 
     // 4. Generate the decision using the current observation ID.
-    console.log("🧠 Generating recommendation for the current general observation...\n");
+    console.log("Generating recommendation for the current general observation...\n");
 
     recommendation = await generateRecommendation(
       cropCycle.id,
       currentGeneralObservation.id
     );
 
-    console.log("💡 GENERATED RECOMMENDATION:");
+    console.log("GENERATED RECOMMENDATION:");
     console.log(JSON.stringify(recommendation.toJSON(), null, 2));
     console.log("");
 
@@ -144,58 +144,58 @@ async function testDecisionEngineFallback() {
       );
     }
 
-    console.log("\n🎉 Decision-engine fallback test passed!");
+    console.log("Decision-engine fallback test passed!");
   } catch (error) {
-    console.error("\n❌ Decision-engine fallback test failed:");
+    console.error("Decision-engine fallback test failed:");
     console.error(error.message);
     process.exitCode = 1;
   } finally {
-    console.log("\n🧹 Cleaning up test data...");
+    console.log("Cleaning up test data...");
 
     try {
       if (recommendation) {
         await Recommendation.destroy({
           where: { id: recommendation.id },
         });
-        console.log("🧹 Test recommendation removed.");
+        console.log("Test recommendation removed.");
       }
 
       if (currentGeneralObservation) {
         await FarmerObservation.destroy({
           where: { id: currentGeneralObservation.id },
         });
-        console.log("🧹 Current general observation removed.");
+        console.log("Current general observation removed.");
       }
 
       if (oldCropHealthObservation) {
         await FarmerObservation.destroy({
           where: { id: oldCropHealthObservation.id },
         });
-        console.log("🧹 Older crop-health observation removed.");
+        console.log("Older crop-health observation removed.");
       }
 
       if (cropCycle) {
         await CropCycle.destroy({
           where: { id: cropCycle.id },
         });
-        console.log("🧹 Test crop cycle removed.");
+        console.log("Test crop cycle removed.");
       }
 
       if (farm) {
         await Farm.destroy({
           where: { id: farm.id },
         });
-        console.log("🧹 Test farm removed.");
+        console.log("Test farm removed.");
       }
 
       if (farmer) {
         await Farmer.destroy({
           where: { id: farmer.id },
         });
-        console.log("🧹 Test farmer removed.");
+        console.log("Test farmer removed.");
       }
     } catch (cleanupError) {
-      console.error("⚠️ Test cleanup encountered an error:");
+      console.error("Test cleanup encountered an error:");
       console.error(cleanupError.message);
       process.exitCode = 1;
     }
