@@ -1,0 +1,58 @@
+{
+  "README_and_data_use_notes.md": {
+    "status": "completed",
+    "ingestionId": "ingest_115fcf7c-5a9c-4e1c-8802-e1b306637e8c",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/1007f3d245cc45c28fdd3ff6e125bd2d.txt",
+    "ingestedAt": "2026-10-13T13:05:48.049Z"
+  },
+  "maize_varieties_kephis_2022.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_9e482190-13c4-46d3-a967-59324ef6e3e5",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/c566432d95d2434295e7af45c571fb6c.txt",
+    "ingestedAt": "2026-10-13T13:05:55.722Z"
+  },
+  "sweetpotato_varieties_kephis_2022.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_4e91fdca-bbc8-49de-8d45-9df67a872021",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/00dd4320fbcb43a9a0de11907c365695.txt",
+    "ingestedAt": "2026-10-13T13:06:02.996Z"
+  },
+  "maize_growth_stages_management_draft.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_c9380eba-c104-4346-9672-0f9277730716",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/cea7bd8f68f84e768cda3c40dfb4eee3.txt",
+    "ingestedAt": "2026-10-13T13:21:45.552Z"
+  },
+  "maize_pest_disease_identification_draft.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_af4b73fa-169f-4655-9883-0937216f56d5",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/aba3c9c93ddc45b281325595072fa15c.txt",
+    "ingestedAt": "2026-10-13T13:27:13.476Z"
+  },
+  "maize_weather_crop_risk_interpretation_draft.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_330d1739-88de-4c9f-ad78-4840e6a60cfb",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/ae11afe5e476444497eb7d93e489a948.txt",
+    "ingestedAt": "2026-10-13T13:30:26.655Z"
+  },
+  "source_register_and_attribution.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_194f2eb5-72d5-4e7f-892c-aa26c800e54b",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/94017032ebe74c41922a07aa2ced7d47.txt",
+    "ingestedAt": "2026-10-13T13:21:50.947Z"
+  },
+  "sweetpotato_knowledge_cip_cc_by_4.csv": {
+    "status": "completed",
+    "ingestionId": "ingest_84f2d335-7c35-438d-b016-d1969ff52429",
+    "vectorStoreId": "BNW1YJBMCV",
+    "fileId": "knowledge-bases/team-agrimama-ai/41e51385e124414faa99bf50c67cde47.txt",
+    "ingestedAt": "2026-10-13T13:27:19.509Z"
+  }
+}

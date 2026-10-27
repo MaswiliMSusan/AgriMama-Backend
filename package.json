@@ -1,0 +1,32 @@
+{
+  "name": "agrimama-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "dev": "node --watch app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/formbody": "^9.0.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "africastalking": "^0.8.4",
+    "dotenv": "^18.0.4",
+    "fastify": "^5.12.5",
+    "openai": "^7.25.0",
+    "pg": "^8.23.0",
+    "pg-hstore": "^2.3.4",
+    "postgres": "^3.4.9",
+    "sequelize": "^6.37.8"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "sequelize-cli": "^6.6.5"
+  }
+}
