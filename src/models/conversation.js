@@ -1,4 +1,3 @@
-
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -29,7 +28,7 @@ const Conversation = sequelize.define(
 
     farmId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: Farm,
         key: "id",
@@ -40,7 +39,7 @@ const Conversation = sequelize.define(
 
     cropCycleId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: CropCycle,
         key: "id",
@@ -51,13 +50,28 @@ const Conversation = sequelize.define(
 
     observationId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: FarmerObservation,
         key: "id",
       },
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
+    },
+
+    purpose: {
+      type: DataTypes.STRING(40),
+      allowNull: false,
+      defaultValue: "observation_clarification",
+      validate: {
+        isIn: [["crop_selection", "observation_clarification"]],
+      },
+    },
+
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
     },
 
     question: {
@@ -141,7 +155,7 @@ Conversation.belongsTo(CropCycle, {
   as: "cropCycle",
 });
 
-// Original observation that triggered the question
+// Original observation
 FarmerObservation.hasMany(Conversation, {
   foreignKey: "observationId",
   as: "triggeredConversations",
@@ -152,7 +166,7 @@ Conversation.belongsTo(FarmerObservation, {
   as: "originalObservation",
 });
 
-// Observation created from the farmer's reply
+// Observation created from farmer's reply
 FarmerObservation.hasMany(Conversation, {
   foreignKey: "answerObservationId",
   as: "answeredConversations",

@@ -107,7 +107,13 @@ const Recommendation = sequelize.define(
       allowNull: false,
       defaultValue: true,
     },
-
+    
+    metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: {},
+   },
+   
     reviewedBy: {
       type: DataTypes.STRING(100),
       allowNull: true,

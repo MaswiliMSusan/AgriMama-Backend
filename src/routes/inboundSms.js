@@ -1,6 +1,8 @@
 
 import crypto from "node:crypto";
 import formbody from "@fastify/formbody";
+
+import Farmer from "../models/farmer.js";
 import SmsInboundMessage from "../models/smsInboundMessage.js";
 
 export default async function inboundSmsRoutes(fastify) {
@@ -39,6 +41,7 @@ export default async function inboundSmsRoutes(fastify) {
     }
 
     const body = request.body || {};
+
     const providerMessageId = String(body.id || "").trim();
     const fromPhone = String(body.from || "").trim();
     const messageText = String(body.text || "").trim();
@@ -71,82 +74,85 @@ export default async function inboundSmsRoutes(fastify) {
         status: "received",
       });
     } catch (error) {
-      if (error.name !== "SequelizeUniqueConstraintError") {
-        request.log.error(error);
-
-        return reply.code(500).send({
-          success: false,
-          error: "Could not record inbound SMS.",
-        });
-      }
-
-      inbound = await SmsInboundMessage.findOne({
-        where: { providerMessageId },
-      });
-
-      if (!inbound) {
-        return reply.code(500).send({
-          success: false,
-          error: "Could not retrieve existing inbound SMS.",
-        });
-      }
-
-      // Never process a reused ID with different content.
-      if (
-        inbound.fromPhone !== fromPhone ||
-        inbound.messageText !== messageText
-      ) {
-        return reply.code(409).send({
-          success: false,
-          error: "Message ID was reused with different content.",
-        });
-      }
-
-      if (inbound.status === "processed") {
+      if (error.name === "SequelizeUniqueConstraintError") {
         return reply.code(200).send({
           success: true,
           status: "duplicate",
         });
       }
 
-      if (inbound.status === "processing") {
-        return reply.code(409).send({
-          success: false,
-          status: "processing",
-          error: "This SMS is already being processed.",
-        });
-      }
+      request.log.error(error);
 
-      // Retry records that were received but not completed,
-      // or previously failed.
-      const [updatedCount] = await SmsInboundMessage.update(
-        {
-          status: "processing",
-          errorMessage: null,
-        },
-        {
-          where: {
-            id: inbound.id,
-            status: inbound.status,
-          },
-        }
-      );
-
-      if (updatedCount === 0) {
-        return reply.code(409).send({
-          success: false,
-          status: "processing",
-          error: "Another request may be processing this SMS.",
-        });
-      }
-
-      inbound = await SmsInboundMessage.findByPk(inbound.id);
+      return reply.code(500).send({
+        success: false,
+        error: "Could not record inbound SMS.",
+      });
     }
 
     try {
-      // Mark newly created records as processing.
-      if (inbound.status === "received") {
-        await inbound.update({ status: "processing" });
+      // Handle SMS consent commands before normal processing.
+      const consentCommand = messageText.trim().toUpperCase();
+
+      if (consentCommand === "STOP" || consentCommand === "START") {
+        const farmer = await Farmer.findOne({
+          where: { phone: fromPhone },
+        });
+
+        if (!farmer) {
+          await inbound.update({
+            status: "processed",
+            processedAt: new Date(),
+            errorMessage: null,
+          });
+
+          return reply.code(200).send({
+            success: true,
+            status: "farmer_not_registered",
+          });
+        }
+
+        if (consentCommand === "STOP") {
+          await farmer.update({
+            consentStatus: false,
+          });
+
+          await inbound.update({
+            status: "processed",
+            processedAt: new Date(),
+            errorMessage: null,
+          });
+
+          request.log.info(
+            { farmerId: farmer.id },
+            "Farmer opted out of SMS messages."
+          );
+
+          return reply.code(200).send({
+            success: true,
+            status: "sms_opted_out",
+          });
+        }
+
+        await farmer.update({
+          consentStatus: true,
+          consentAt: new Date(),
+        });
+
+        await inbound.update({
+          status: "processed",
+          processedAt: new Date(),
+          errorMessage: null,
+        });
+
+        request.log.info(
+          { farmerId: farmer.id },
+          "Farmer opted back in to SMS messages."
+        );
+
+        return reply.code(200).send({
+          success: true,
+          status: "sms_opted_in",
+        });
       }
 
       // Reuse the existing AgriMama message workflow.
@@ -165,8 +171,7 @@ export default async function inboundSmsRoutes(fastify) {
       if (result.statusCode < 200 || result.statusCode >= 300) {
         await inbound.update({
           status: "failed",
-          errorMessage:
-            `Message handler returned HTTP ${result.statusCode}`,
+          errorMessage: `Message handler returned HTTP ${result.statusCode}`,
         });
 
         request.log.warn(
@@ -190,11 +195,29 @@ export default async function inboundSmsRoutes(fastify) {
         errorMessage: null,
       });
 
-      return reply.code(200).send({
-        success: true,
-        status: "processed",
-        providerMessageId,
-      });
+      const farmerSms = responseBody.farmerSms;
+
+return reply.code(200).send({
+  success: true,
+  status: "processed",
+  providerMessageId,
+
+  farmerSms: farmerSms
+    ? {
+        status: farmerSms.status ?? "unknown",
+        success:
+          typeof farmerSms.success === "boolean"
+            ? farmerSms.success
+            : null,
+        actionCode: farmerSms.actionCode ?? null,
+        messageId: farmerSms.messageId ?? null,
+        statusCode: farmerSms.statusCode ?? null,
+        requestId: farmerSms.requestId ?? null,
+      }
+    : null,
+});
+
+
     } catch (error) {
       request.log.error(
         { err: error, providerMessageId },

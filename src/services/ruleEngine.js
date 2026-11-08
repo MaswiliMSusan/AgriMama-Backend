@@ -1,5 +1,7 @@
+
 import { evaluateCropHealth } from "./decisionRules/cropHealth.js";
 import { evaluateWeatherDryness } from "./decisionRules/weatherDryness.js";
+import { evaluateWeatherForecastRisk } from "./decisionRules/weatherForecastRisk.js";
 
 const rules = [
   {
@@ -12,6 +14,11 @@ const rules = [
     priority: 1,
     evaluate: evaluateWeatherDryness,
   },
+  {
+    name: "weatherForecastRisk",
+    priority: 0,
+    evaluate: evaluateWeatherForecastRisk,
+  },
 ];
 
 export function evaluateRules(context) {
@@ -23,6 +30,11 @@ export function evaluateRules(context) {
 
   for (const rule of rules) {
     const decision = rule.evaluate(context);
+
+    console.log(`[RULE DEBUG] ${rule.name}:`, {
+      matched: Boolean(decision),
+      actionCode: decision?.actionCode || null,
+    });
 
     if (decision) {
       matchedRules.push({

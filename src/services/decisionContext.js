@@ -7,6 +7,8 @@ import FarmWeatherStation from "../models/farmWeatherStation.js";
 import WeatherStation from "../models/weatherStation.js";
 import WeatherObservation from "../models/weatherObservation.js";
 
+import { getWeatherForFarm } from "./weather/weatherProvider.js";
+
 export async function buildDecisionContext(
   cropCycleId,
   triggeringObservationId = null
@@ -89,13 +91,23 @@ export async function buildDecisionContext(
   }
 
   // Get active weather stations linked to this farm.
-  const activeStations =
-    farm.weatherStations?.filter(
-      (station) =>
-        station.FarmWeatherStation?.active === true
-    ) || [];
+  // Local testing switch: simulate a farm without NuaSense.
+// This override is deliberately disabled in production.
+const disableStationWeatherForTesting =
+  process.env.NODE_ENV !== "production" &&
+  process.env.AGRIMAMA_DISABLE_STATION_WEATHER === "true";
 
-  // Collect recent weather observations from linked stations.
+// Get active weather stations linked to this farm.
+const activeStations = disableStationWeatherForTesting
+  ? []
+  : (
+      farm.weatherStations?.filter(
+        (station) =>
+          station.FarmWeatherStation?.active === true
+      ) || []
+    );
+
+  // Collect recent physical weather observations from linked stations.
   const weather = [];
 
   for (const station of activeStations) {
@@ -110,6 +122,8 @@ export async function buildDecisionContext(
     weather.push(
       ...weatherObservations.map((observation) => ({
         stationId: station.id,
+        source: "nua_sense",
+        sourceType: "station_measurement",
         recordedAt: observation.recordedAt,
         temperature: observation.temperature,
         humidity: observation.humidity,
@@ -124,6 +138,13 @@ export async function buildDecisionContext(
       }))
     );
   }
+
+  // Retrieve optional external weather forecasts.
+  // This must never prevent the decision context from being built.
+  const weatherForecast = await getWeatherForFarm({
+    latitude: farm.latitude,
+    longitude: farm.longitude,
+  });
 
   return {
     farmer: {
@@ -177,6 +198,10 @@ export async function buildDecisionContext(
       gatewayId: station.gatewayId,
     })),
 
+    // Physical measurements from linked weather stations.
     weather,
+
+    // External model-based weather estimates and forecasts.
+    weatherForecast,
   };
 }

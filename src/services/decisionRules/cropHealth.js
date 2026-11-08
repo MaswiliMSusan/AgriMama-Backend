@@ -10,6 +10,7 @@ export function evaluateCropHealth(context) {
     cropCycle,
     observations = [],
     weather = [],
+    weatherForecast = null,
     triggeringObservation = null,
   } = context;
 
@@ -18,8 +19,6 @@ export function evaluateCropHealth(context) {
   }
 
   // 1. Prefer the observation that triggered this decision.
-  // Do not use an older crop-health report when the current
-  // message belongs to a different category.
   const cropHealthObservation = triggeringObservation
     ? (
         triggeringObservation.category?.toLowerCase().trim() ===
@@ -54,8 +53,10 @@ export function evaluateCropHealth(context) {
     reason += ` The crop is ${crop} and is currently at the ${growthStage} stage.`;
   }
 
-  // 4. Add available weather as supporting context.
+  // 4. Prefer physical weather station measurements.
   const latestWeather = weather[0] || null;
+
+  let weatherSourceUsed = "none";
 
   if (latestWeather) {
     const weatherDetails = [];
@@ -79,39 +80,106 @@ export function evaluateCropHealth(context) {
     }
 
     if (weatherDetails.length > 0) {
-      reason += ` Recent weather information is available (${weatherDetails.join(
-        ", "
-      )}), but it should be considered alongside what the farmer observes in the field.`;
+      weatherSourceUsed = "nua_sense";
+
+      reason +=
+        ` Recent measurements from a NuaSense weather station are available (${weatherDetails.join(", ")}). These measurements should be considered alongside what the farmer observes in the field.`;
     }
   }
 
-  // 5. Return the structured decision.
+  // 5. If no station measurements are available,
+  // use Open-Meteo model-based weather information.
+  if (
+    weatherSourceUsed === "none" &&
+    weatherForecast?.available === true
+  ) {
+    const openMeteo = weatherForecast.sources?.find(
+      (source) => source.source === "open_meteo"
+    );
+
+    if (openMeteo) {
+      const weatherDetails = [];
+      const current = openMeteo.current || {};
+      const tomorrow = openMeteo.daily?.[1] || null;
+
+      if (current.temperatureC != null) {
+        weatherDetails.push(
+          `estimated current temperature ${current.temperatureC}°C`
+        );
+      }
+
+      if (current.relativeHumidityPercent != null) {
+        weatherDetails.push(
+          `estimated relative humidity ${current.relativeHumidityPercent}%`
+        );
+      }
+
+      if (tomorrow) {
+        if (tomorrow.precipitationSumMm != null) {
+          weatherDetails.push(
+            `tomorrow's forecast rainfall ${tomorrow.precipitationSumMm} mm`
+          );
+        }
+
+        if (tomorrow.precipitationProbabilityMax != null) {
+          weatherDetails.push(
+            `tomorrow's maximum forecast rain probability ${tomorrow.precipitationProbabilityMax}%`
+          );
+        }
+      }
+
+      if (weatherDetails.length > 0) {
+        weatherSourceUsed = "open_meteo";
+
+        reason +=
+          ` Open-Meteo model-based weather estimates and forecasts are available (${weatherDetails.join(", ")}). These are not direct farm measurements and should be considered alongside what the farmer observes in the field.`;
+      }
+    }
+  }
+
+  // 6. Return the structured decision.
   return {
-    type: "inspection",
-    actionCode: "INSPECT_CROP_DAMAGE",
-    observationId: cropHealthObservation.id,
+  type: "inspection",
+  actionCode: "INSPECT_CROP_DAMAGE",
+  observationId: cropHealthObservation.id,
 
-    recommendation,
-    reason,
+  recommendation,
+  reason,
 
-    priority: "normal",
-    requiresHumanReview: true,
-    source: "AgriMama crop health rule",
+priority: "normal",
+requiresHumanReview: false,
+source: "AgriMama crop health rule",
 
-    language:
-      cropHealthObservation.language ||
-      farmer?.preferredLanguage ||
-      "en",
+  language:
+    cropHealthObservation.language ||
+    farmer?.preferredLanguage ||
+    "en",
 
-    metadata: {
-      crop: cropCycle.crop || null,
-      growthStage: cropCycle.currentStage || null,
-      observationCategory:
-        cropHealthObservation.category || null,
-      weatherAvailable: weather.length > 0,
-      weatherStationCount:
-        context.weatherStations?.length || 0,
-      farmId: farm?.id || null,
-    },
-  };
+  metadata: {
+    crop: cropCycle.crop || null,
+    growthStage: cropCycle.currentStage || null,
+    observationCategory:
+      cropHealthObservation.category || null,
+
+    // Advisory safety classification
+    riskLevel: "moderate",
+    adviceType: "safe_interim_guidance",
+    diagnosisConfirmed: false,
+    expertReviewRecommended: false,
+
+    weatherAvailable:
+      weather.length > 0 ||
+      weatherForecast?.available === true,
+
+    weatherStationCount:
+      context.weatherStations?.length || 0,
+
+    weatherSourceUsed,
+
+    weatherForecastAvailable:
+      weatherForecast?.available === true,
+
+    farmId: farm?.id || null,
+  },
+};
 }

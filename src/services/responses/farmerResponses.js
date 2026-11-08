@@ -1,10 +1,11 @@
+
 const farmerResponses = {
   INSPECT_CROP_DAMAGE: {
-    en: {
-      message:
-        "You've reported that insects are eating your maize leaves. Please inspect several affected plants and observe what the leaf damage looks like before applying any pesticide. Tell me what you see on the affected leaves so I can help with the next step.",
-      validated: true,
-    },
+en: {
+  message:
+    "You've reported yellowing and brown spots on your maize leaves. Please inspect several affected plants and observe what the leaf damage looks like before applying any pesticide. Tell me what you see on the affected leaves so I can help with the next step.",
+  validated: true,
+},
 
     dholuo: {
       // Replace this with the Dholuo wording validated by your
@@ -80,9 +81,7 @@ export function getFarmerResponse(actionCode, language = "en") {
     );
   }
 
-  const normalizedLanguage = language
-    .toLowerCase()
-    .trim();
+  const normalizedLanguage = language.toLowerCase().trim();
 
   const response = responseSet[normalizedLanguage];
 

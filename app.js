@@ -5,6 +5,10 @@ import decisionRoutes from "./src/routes/decisions.js";
 import observationRoutes from "./src/routes/observations.js";
 import messageRoutes from "./src/routes/messages.js";
 import inboundSmsRoutes from "./src/routes/inboundSms.js";
+import farmerRoutes from "./src/routes/farmers.js";
+import farmRoutes from "./src/routes/farms.js";
+import cropCycleRoutes from "./src/routes/cropCycles.js";
+
 
 const app = Fastify({
   logger: true,
@@ -29,6 +33,18 @@ await app.register(messageRoutes, {
 });
 
 await app.register(inboundSmsRoutes, {
+  prefix: "/api",
+});
+
+await app.register(farmerRoutes, {
+  prefix: "/api",
+});
+
+await app.register(farmRoutes, {
+  prefix: "/api",
+});
+
+await app.register(cropCycleRoutes, {
   prefix: "/api",
 });
 

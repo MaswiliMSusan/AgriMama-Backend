@@ -1,4 +1,3 @@
-
 import { resolveFarmerContext } from "../services/farmerContext.js";
 import { interpretFarmerMessage } from "../services/ai/interpreter.js";
 import { generateRecommendation } from "../services/decisionEngine.js";
@@ -12,17 +11,21 @@ import FarmerObservation from "../models/farmerObservation.js";
 import Conversation from "../models/conversation.js";
 
 export default async function messageRoutes(fastify) {
-  /**
-   * Send an approved recommendation response when permitted.
-   * Recommendations requiring human review are never sent automatically.
-   */
   async function sendRecommendationSms({
     phone,
     recommendation,
     language,
     channel,
     requestId,
+    consentStatus,
   }) {
+    if (consentStatus !== true) {
+      return {
+        status: "not_sent",
+        reason: "farmer_consent_not_granted",
+      };
+    }
+
     if (
       channel !== "sms" ||
       process.env.AT_SMS_ENABLED !== "true"
@@ -105,16 +108,22 @@ export default async function messageRoutes(fastify) {
     };
   }
 
-  /**
-   * Send a clarification question only when SMS is enabled
-   * and the request channel is SMS.
-   */
   async function sendClarificationSms({
     phone,
     question,
     channel,
     requestId,
+    consentStatus,
   }) {
+    if (consentStatus !== true) {
+      return {
+        enabled: false,
+        success: false,
+        status: "not_sent",
+        reason: "farmer_consent_not_granted",
+      };
+    }
+
     if (
       process.env.AT_SMS_ENABLED !== "true" ||
       channel !== "sms"
@@ -158,7 +167,6 @@ export default async function messageRoutes(fastify) {
         channel = "sms",
       } = request.body || {};
 
-      // Validate the incoming message.
       if (
         typeof phone !== "string" ||
         !phone.trim() ||
@@ -174,7 +182,10 @@ export default async function messageRoutes(fastify) {
       const normalizedPhone = phone.trim();
       const normalizedMessage = message.trim();
 
-      // 1. Check for a registered farmer and pending conversation.
+      // --------------------------------------------------
+      // 1. Find registered farmer and pending conversation
+      // --------------------------------------------------
+
       const registeredFarmer = await Farmer.findOne({
         where: { phone: normalizedPhone },
       });
@@ -189,23 +200,350 @@ export default async function messageRoutes(fastify) {
             {
               model: FarmerObservation,
               as: "originalObservation",
-              required: true,
+              required: false,
             },
             {
               model: Farm,
               as: "farm",
-              required: true,
+              required: false,
             },
             {
               model: CropCycle,
               as: "cropCycle",
-              required: true,
+              required: false,
             },
           ],
           order: [["askedAt", "DESC"]],
         });
 
         if (pendingConversation) {
+          // --------------------------------------------------
+          // 1A. Handle crop-selection conversation
+          // --------------------------------------------------
+
+          if (pendingConversation.purpose === "crop_selection") {
+            const metadata = pendingConversation.metadata || {};
+            const stage =
+              metadata.stage || "awaiting_crop_selection";
+
+            const preferredLanguage =
+              language ||
+              registeredFarmer.preferredLanguage ||
+              "en";
+
+            const selection = Number(normalizedMessage.trim());
+
+            if (stage === "awaiting_crop_selection") {
+              const options = Array.isArray(metadata.options)
+                ? metadata.options
+                : [];
+
+              const anotherCropOption = options.length + 1;
+
+              if (
+                !Number.isInteger(selection) ||
+                selection < 1 ||
+                selection > anotherCropOption
+              ) {
+                const retryText =
+                  metadata.selectionQuestion ||
+                  pendingConversation.question;
+
+                const smsDelivery = await sendClarificationSms({
+                  phone: normalizedPhone,
+                  question:
+                    `Please reply with a number from 1 to ${anotherCropOption}.\n${retryText}`,
+                  channel,
+                  requestId: request.id,
+                  consentStatus: registeredFarmer.consentStatus,
+                });
+
+                return reply.code(200).send({
+                  success: true,
+                  status: "invalid_crop_selection",
+                  message: retryText,
+                  smsDelivery,
+                });
+              }
+
+              // Farmer selected "Another crop".
+              if (selection === anotherCropOption) {
+                const nextQuestion =
+                  "Which other crop are you referring to? Please type the crop name.";
+
+                await pendingConversation.update({
+                  question: nextQuestion,
+                  answer: normalizedMessage,
+                  askedAt: new Date(),
+                  metadata: {
+                    ...metadata,
+                    stage: "awaiting_other_crop_name",
+                  },
+                });
+
+                const smsDelivery = await sendClarificationSms({
+                  phone: normalizedPhone,
+                  question: nextQuestion,
+                  channel,
+                  requestId: request.id,
+                  consentStatus: registeredFarmer.consentStatus,
+                });
+
+                return reply.code(200).send({
+                  success: true,
+                  status: "needs_crop_name",
+                  message: nextQuestion,
+                  smsDelivery,
+                });
+              }
+
+              // Farmer selected a registered crop cycle.
+              const selectedOption = options[selection - 1];
+
+              if (
+                !selectedOption?.cropCycleId ||
+                !selectedOption?.farmId
+              ) {
+                throw new Error(
+                  "The selected crop option is no longer available."
+                );
+              }
+
+              const farm = await Farm.findByPk(
+                selectedOption.farmId
+              );
+
+              const cropCycle = await CropCycle.findByPk(
+                selectedOption.cropCycleId
+              );
+
+              if (
+                !farm ||
+                !cropCycle ||
+                cropCycle.status !== "active"
+              ) {
+                return reply.code(409).send({
+                  success: false,
+                  status: "crop_option_unavailable",
+                  message:
+                    "That crop cycle is no longer active. Please send your report again.",
+                });
+              }
+
+              const originalMessage = metadata.originalMessage;
+
+              if (!originalMessage) {
+                throw new Error(
+                  "The original farmer message is missing from the crop-selection conversation."
+                );
+              }
+
+              const interpretation =
+                await interpretFarmerMessage(originalMessage, {
+                  crop: cropCycle.crop,
+                  growthStage: cropCycle.currentStage,
+                  language: preferredLanguage,
+                });
+
+              const observation = await FarmerObservation.create({
+                farmerId: registeredFarmer.id,
+                farmId: farm.id,
+                cropCycleId: cropCycle.id,
+                category: interpretation.category,
+                observation: originalMessage,
+                observedAt: new Date(),
+                source: "ai_interpreted",
+                language: preferredLanguage,
+              });
+
+              // AI needs additional clarification.
+              if (interpretation.needsFollowUp) {
+                const nextQuestion =
+                  interpretation.followUpQuestions?.[0];
+
+                if (!nextQuestion) {
+                  throw new Error(
+                    "The interpreter requested follow-up but returned no question."
+                  );
+                }
+
+                await pendingConversation.update({
+                  farmId: farm.id,
+                  cropCycleId: cropCycle.id,
+                  observationId: observation.id,
+                  purpose: "observation_clarification",
+                  question: nextQuestion,
+                  answer: null,
+                  answerObservationId: null,
+                  status: "awaiting_reply",
+                  askedAt: new Date(),
+                  completedAt: null,
+                  metadata: {
+                    selectedCropCycleId: cropCycle.id,
+                  },
+                });
+
+                const smsDelivery = await sendClarificationSms({
+                  phone: normalizedPhone,
+                  question: nextQuestion,
+                  channel,
+                  requestId: request.id,
+                  consentStatus: registeredFarmer.consentStatus,
+                });
+
+                return reply.code(201).send({
+                  success: true,
+                  status: "needs_follow_up",
+                  farmer: {
+                    id: registeredFarmer.id,
+                    name: registeredFarmer.name,
+                  },
+                  farm: {
+                    id: farm.id,
+                    name: farm.name,
+                  },
+                  cropCycle: {
+                    id: cropCycle.id,
+                    crop: cropCycle.crop,
+                    variety: cropCycle.variety,
+                    currentStage: cropCycle.currentStage,
+                  },
+                  interpretation,
+                  observation,
+                  conversation: pendingConversation,
+                  smsDelivery,
+                  recommendation: null,
+                  followUpQuestions:
+                    interpretation.followUpQuestions,
+                });
+              }
+
+              // AI has enough information.
+              await pendingConversation.update({
+                farmId: farm.id,
+                cropCycleId: cropCycle.id,
+                observationId: observation.id,
+                purpose: "observation_clarification",
+                status: "completed",
+                completedAt: new Date(),
+                metadata: {
+                  selectedCropCycleId: cropCycle.id,
+                },
+              });
+
+              const recommendation =
+                await generateRecommendation(
+                  cropCycle.id,
+                  observation.id
+                );
+
+              const farmerSms = await sendRecommendationSms({
+                phone: normalizedPhone,
+                recommendation,
+                language: preferredLanguage,
+                channel,
+                requestId: request.id,
+                consentStatus: registeredFarmer.consentStatus,
+              });
+
+              return reply.code(201).send({
+                success: true,
+                status: "processed",
+                conversationStatus: "completed",
+                farmer: {
+                  id: registeredFarmer.id,
+                  name: registeredFarmer.name,
+                },
+                farm: {
+                  id: farm.id,
+                  name: farm.name,
+                },
+                cropCycle: {
+                  id: cropCycle.id,
+                  crop: cropCycle.crop,
+                  variety: cropCycle.variety,
+                  currentStage: cropCycle.currentStage,
+                },
+                interpretation,
+                observation,
+                conversation: pendingConversation,
+                recommendation,
+                farmerSms,
+                followUpQuestions: [],
+              });
+            }
+
+            // --------------------------------------------------
+            // 1B. Farmer selected "Another crop"
+            // --------------------------------------------------
+
+            if (stage === "awaiting_other_crop_name") {
+              const farms = await Farm.findAll({
+                where: {
+                  farmerId: registeredFarmer.id,
+                },
+                order: [["createdAt", "ASC"]],
+              });
+
+              if (farms.length !== 1) {
+                const question =
+                  "Please contact AgriMama support to register the farm for this crop before reporting it.";
+
+                await pendingConversation.update({
+                  status: "completed",
+                  completedAt: new Date(),
+                  answer: normalizedMessage,
+                });
+
+                return reply.code(200).send({
+                  success: true,
+                  status: "crop_registration_required",
+                  message: question,
+                });
+              }
+
+              // Record the farmer's report for registration review.
+              // No crop-specific recommendation is generated here.
+              const observation = await FarmerObservation.create({
+                farmerId: registeredFarmer.id,
+                farmId: farms[0].id,
+                cropCycleId: null,
+                category: "general",
+                observation:
+                  `${metadata.originalMessage || ""}\nAdditional crop reported by farmer: ${normalizedMessage}`.trim(),
+                observedAt: new Date(),
+                source: "farmer",
+                language: preferredLanguage,
+              });
+
+              await pendingConversation.update({
+                farmId: farms[0].id,
+                answer: normalizedMessage,
+                answerObservationId: observation.id,
+                status: "completed",
+                completedAt: new Date(),
+                metadata: {
+                  ...metadata,
+                  stage: "crop_registration_required",
+                  reportedCrop: normalizedMessage,
+                },
+              });
+
+              return reply.code(201).send({
+                success: true,
+                status: "crop_registration_required",
+                message:
+                  `Thank you. We have recorded your report about ${normalizedMessage}. Please register this crop cycle before AgriMama can provide crop-specific advice.`,
+                observation,
+                conversation: pendingConversation,
+              });
+            }
+          }
+
+          // --------------------------------------------------
+          // 1C. Normal observation clarification conversation
+          // --------------------------------------------------
+
           const farm = pendingConversation.farm;
           const cropCycle = pendingConversation.cropCycle;
           const originalObservation =
@@ -216,8 +554,6 @@ export default async function messageRoutes(fastify) {
             registeredFarmer.preferredLanguage ||
             "en";
 
-          // Keep the original report and any previous reply
-          // available to the interpreter.
           const observationContext = [
             originalObservation.observation,
             pendingConversation.answer
@@ -227,30 +563,30 @@ export default async function messageRoutes(fastify) {
             .filter(Boolean)
             .join("\n");
 
-          const interpretation = await interpretFarmerMessage(
-            normalizedMessage,
-            {
-              crop: cropCycle.crop,
-              growthStage: cropCycle.currentStage,
+          const interpretation =
+            await interpretFarmerMessage(
+              normalizedMessage,
+              {
+                crop: cropCycle.crop,
+                growthStage: cropCycle.currentStage,
+                language: preferredLanguage,
+                originalObservation: observationContext,
+                followUpQuestion: pendingConversation.question,
+              }
+            );
+
+          const answerObservation =
+            await FarmerObservation.create({
+              farmerId: registeredFarmer.id,
+              farmId: farm.id,
+              cropCycleId: cropCycle.id,
+              category: interpretation.category,
+              observation: normalizedMessage,
+              observedAt: new Date(),
+              source: "farmer_reply",
               language: preferredLanguage,
-              originalObservation: observationContext,
-              followUpQuestion: pendingConversation.question,
-            }
-          );
+            });
 
-          // Save the clarification reply as a separate observation.
-          const answerObservation = await FarmerObservation.create({
-            farmerId: registeredFarmer.id,
-            farmId: farm.id,
-            cropCycleId: cropCycle.id,
-            category: interpretation.category,
-            observation: normalizedMessage,
-            observedAt: new Date(),
-            source: "farmer_reply",
-            language: preferredLanguage,
-          });
-
-          // 1A. The interpreter needs another clarification.
           if (interpretation.needsFollowUp) {
             const nextQuestion =
               interpretation.followUpQuestions?.[0];
@@ -275,6 +611,7 @@ export default async function messageRoutes(fastify) {
               question: nextQuestion,
               channel,
               requestId: request.id,
+              consentStatus: registeredFarmer.consentStatus,
             });
 
             return reply.code(201).send({
@@ -307,7 +644,6 @@ export default async function messageRoutes(fastify) {
             });
           }
 
-          // 1B. The clarification provides enough information.
           await pendingConversation.update({
             answer: normalizedMessage,
             answerObservationId: answerObservation.id,
@@ -315,10 +651,11 @@ export default async function messageRoutes(fastify) {
             completedAt: new Date(),
           });
 
-          const recommendation = await generateRecommendation(
-            cropCycle.id,
-            answerObservation.id
-          );
+          const recommendation =
+            await generateRecommendation(
+              cropCycle.id,
+              answerObservation.id
+            );
 
           const farmerSms = await sendRecommendationSms({
             phone: normalizedPhone,
@@ -326,6 +663,7 @@ export default async function messageRoutes(fastify) {
             language: preferredLanguage,
             channel,
             requestId: request.id,
+            consentStatus: registeredFarmer.consentStatus,
           });
 
           return reply.code(201).send({
@@ -359,8 +697,12 @@ export default async function messageRoutes(fastify) {
         }
       }
 
-      // 2. No pending conversation: process a new message.
-      const context = await resolveFarmerContext(normalizedPhone);
+      // --------------------------------------------------
+      // 2. No pending conversation: process a new message
+      // --------------------------------------------------
+
+      const context =
+        await resolveFarmerContext(normalizedPhone);
 
       if (context.status === "not_found") {
         return reply.code(404).send({
@@ -380,23 +722,93 @@ export default async function messageRoutes(fastify) {
         });
       }
 
+      // --------------------------------------------------
+      // 2A. Multiple farms or crop cycles: ask for selection
+      // --------------------------------------------------
+
       if (context.status === "ambiguous") {
-        return reply.code(409).send({
-          success: false,
-          status: "needs_clarification",
-          message:
-            "You have more than one active farm or crop. AgriMama needs to know which farm or crop you are referring to.",
-          farms: context.farms.map((farm) => ({
-            id: farm.id,
-            name: farm.name,
-          })),
-          cropCycles: context.cropCycles.map((cropCycle) => ({
-            id: cropCycle.id,
+        const farmsById = new Map(
+          context.farms.map((farm) => [farm.id, farm])
+        );
+
+        const options = context.cropCycles.map((cropCycle) => {
+          const farm = farmsById.get(cropCycle.farmId);
+
+          const description = [
+            cropCycle.crop,
+            cropCycle.variety
+              ? `Variety ${cropCycle.variety}`
+              : null,
+            cropCycle.currentStage
+              ? `${cropCycle.currentStage} stage`
+              : null,
+            context.farms.length > 1 && farm?.name
+              ? `Farm: ${farm.name}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" – ");
+
+          return {
+            cropCycleId: cropCycle.id,
             farmId: cropCycle.farmId,
-            crop: cropCycle.crop,
-            variety: cropCycle.variety,
-            currentStage: cropCycle.currentStage,
-          })),
+            label: description,
+          };
+        });
+
+        const lines = options.map(
+          (option, index) =>
+            `${index + 1}. ${option.label}`
+        );
+
+        lines.push(`${options.length + 1}. Another crop`);
+
+        const selectionQuestion =
+          `Which crop are you referring to?\n${lines.join("\n")}\nReply with the number of your choice.`;
+
+        const conversation = await Conversation.create({
+          farmerId: context.farmer.id,
+          farmId:
+            context.farms.length === 1
+              ? context.farms[0].id
+              : null,
+          cropCycleId: null,
+          observationId: null,
+          purpose: "crop_selection",
+          question: selectionQuestion,
+          status: "awaiting_reply",
+          askedAt: new Date(),
+          metadata: {
+            stage: "awaiting_crop_selection",
+            originalMessage: normalizedMessage,
+            language:
+              language ||
+              context.farmer.preferredLanguage ||
+              "en",
+            options,
+            selectionQuestion,
+          },
+        });
+
+        const smsDelivery = await sendClarificationSms({
+          phone: normalizedPhone,
+          question: selectionQuestion,
+          channel,
+          requestId: request.id,
+          consentStatus: context.farmer.consentStatus,
+        });
+
+        return reply.code(201).send({
+          success: true,
+          status: "needs_crop_selection",
+          message: selectionQuestion,
+          farmer: {
+            id: context.farmer.id,
+            name: context.farmer.name,
+          },
+          options,
+          conversation,
+          smsDelivery,
         });
       }
 
@@ -409,6 +821,10 @@ export default async function messageRoutes(fastify) {
         });
       }
 
+      // --------------------------------------------------
+      // 3. One farm and one active crop: normal processing
+      // --------------------------------------------------
+
       const farmer = context.farmer;
       const farm = context.farm;
       const cropCycle = context.cropCycle;
@@ -416,16 +832,16 @@ export default async function messageRoutes(fastify) {
       const preferredLanguage =
         language || farmer.preferredLanguage || "en";
 
-      const interpretation = await interpretFarmerMessage(
-        normalizedMessage,
-        {
-          crop: cropCycle.crop,
-          growthStage: cropCycle.currentStage,
-          language: preferredLanguage,
-        }
-      );
+      const interpretation =
+        await interpretFarmerMessage(
+          normalizedMessage,
+          {
+            crop: cropCycle.crop,
+            growthStage: cropCycle.currentStage,
+            language: preferredLanguage,
+          }
+        );
 
-      // Save the new farmer message as an observation.
       const observation = await FarmerObservation.create({
         farmerId: farmer.id,
         farmId: farm.id,
@@ -437,7 +853,7 @@ export default async function messageRoutes(fastify) {
         language: preferredLanguage,
       });
 
-      // 2A. Ask a clarification question when needed.
+      // AI needs additional clarification.
       if (interpretation.needsFollowUp) {
         const question =
           interpretation.followUpQuestions?.[0];
@@ -453,6 +869,7 @@ export default async function messageRoutes(fastify) {
           farmId: farm.id,
           cropCycleId: cropCycle.id,
           observationId: observation.id,
+          purpose: "observation_clarification",
           question,
           status: "awaiting_reply",
           askedAt: new Date(),
@@ -463,6 +880,7 @@ export default async function messageRoutes(fastify) {
           question,
           channel,
           requestId: request.id,
+          consentStatus: farmer.consentStatus,
         });
 
         return reply.code(201).send({
@@ -494,11 +912,12 @@ export default async function messageRoutes(fastify) {
         });
       }
 
-      // 2B. The initial message is sufficiently clear.
-      const recommendation = await generateRecommendation(
-        cropCycle.id,
-        observation.id
-      );
+      // No further clarification needed.
+      const recommendation =
+        await generateRecommendation(
+          cropCycle.id,
+          observation.id
+        );
 
       const farmerSms = await sendRecommendationSms({
         phone: normalizedPhone,
@@ -506,6 +925,7 @@ export default async function messageRoutes(fastify) {
         language: preferredLanguage,
         channel,
         requestId: request.id,
+        consentStatus: farmer.consentStatus,
       });
 
       return reply.code(201).send({
