@@ -8,10 +8,31 @@ import inboundSmsRoutes from "./src/routes/inboundSms.js";
 import farmerRoutes from "./src/routes/farmers.js";
 import farmRoutes from "./src/routes/farms.js";
 import cropCycleRoutes from "./src/routes/cropCycles.js";
+import cookie from "@fastify/cookie";
+import farmerAuthRoutes from "./src/routes/auth/farmerAuth.js";
+import sessionRoutes from "./src/routes/auth/sessionRoutes.js";
+import staffAuthRoutes from "./src/routes/auth/staffAuth.js";
+import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 
 
 const app = Fastify({
   logger: true,
+});
+
+const FRONTEND_ORIGIN =
+  process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+
+await app.register(cors, {
+  origin: FRONTEND_ORIGIN,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+});
+
+await app.register(cookie);
+
+await app.register(rateLimit, {
+  global: false,
 });
 
 const PORT = Number(process.env.PORT) || 7000;
@@ -19,6 +40,21 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 // --------------------------------------------------
 // Routes
+
+app.decorateRequest("authUser", null);
+app.decorateRequest("authSession", null);
+
+await app.register(staffAuthRoutes, {
+  prefix: "/api/auth/staff",
+});
+
+await app.register(sessionRoutes, {
+  prefix: "/api/auth",
+});
+
+await app.register(farmerAuthRoutes, {
+  prefix: "/api/auth/farmer",
+});
 
 await app.register(decisionRoutes, {
   prefix: "/api",

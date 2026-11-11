@@ -4,6 +4,7 @@ import formbody from "@fastify/formbody";
 
 import Farmer from "../models/farmer.js";
 import SmsInboundMessage from "../models/smsInboundMessage.js";
+import { processFarmerMessage } from "../services/messages/processFarmerMessage.js";
 
 export default async function inboundSmsRoutes(fastify) {
   await fastify.register(formbody);
@@ -155,18 +156,17 @@ export default async function inboundSmsRoutes(fastify) {
         });
       }
 
-      // Reuse the existing AgriMama message workflow.
-      const result = await fastify.inject({
-        method: "POST",
-        url: "/api/messages",
-        payload: {
-          phone: fromPhone,
-          message: messageText,
-          channel: "sms",
-        },
+      // Call the shared processing service directly. The webhook has
+      // already authenticated the provider using the shared webhook token.
+      const result = await processFarmerMessage({
+        fastify,
+        phone: fromPhone,
+        message: messageText,
+        source: "sms_webhook",
+        requestId: request.id,
       });
 
-      const responseBody = result.json();
+      const responseBody = result.body;
 
       if (result.statusCode < 200 || result.statusCode >= 300) {
         await inbound.update({
@@ -178,7 +178,6 @@ export default async function inboundSmsRoutes(fastify) {
           {
             providerMessageId,
             statusCode: result.statusCode,
-            result: responseBody,
           },
           "Inbound SMS could not be processed."
         );
@@ -195,7 +194,7 @@ export default async function inboundSmsRoutes(fastify) {
         errorMessage: null,
       });
 
-      const farmerSms = responseBody.farmerSms;
+      const farmerSms = responseBody.farmerSms ?? responseBody.smsDelivery;
 
 return reply.code(200).send({
   success: true,
