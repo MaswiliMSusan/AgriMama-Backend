@@ -12,6 +12,8 @@ import cookie from "@fastify/cookie";
 import farmerAuthRoutes from "./src/routes/auth/farmerAuth.js";
 import sessionRoutes from "./src/routes/auth/sessionRoutes.js";
 import staffAuthRoutes from "./src/routes/auth/staffAuth.js";
+import conversationRoutes from "./src/routes/conversations.js";
+import assistantRoutes from "./src/routes/assistant.js";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 
@@ -81,6 +83,14 @@ await app.register(farmRoutes, {
 });
 
 await app.register(cropCycleRoutes, {
+  prefix: "/api",
+});
+
+await app.register(conversationRoutes, {
+  prefix: "/api",
+});
+
+await app.register(assistantRoutes, {
   prefix: "/api",
 });
 

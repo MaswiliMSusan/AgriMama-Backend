@@ -64,7 +64,11 @@ const Conversation = sequelize.define(
       allowNull: false,
       defaultValue: "observation_clarification",
       validate: {
-        isIn: [["crop_selection", "observation_clarification"]],
+        isIn: [[
+          "crop_selection",
+          "observation_clarification",
+          "ai_assistant",
+        ]],
       },
     },
 

@@ -5,6 +5,7 @@ import CropCycle from "./cropCycle.js";
 import FarmerObservation from "./farmerObservation.js";
 import Recommendation from "./recommendation.js";
 import Conversation from "./conversation.js";
+import ConversationMessage from "./conversationMessage.js";
 
 import User from "./user.js";
 import AuthOtp from "./authOtp.js";
@@ -41,4 +42,5 @@ export {
   User,
   AuthOtp,
   AuthSession,
+  ConversationMessage,
 };

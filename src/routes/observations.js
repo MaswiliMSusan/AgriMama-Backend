@@ -5,6 +5,7 @@ import Farmer from "../models/farmer.js";
 import Farm from "../models/farm.js";
 import CropCycle from "../models/cropCycle.js";
 import Recommendation from "../models/recommendation.js";
+import ConversationMessage from "../models/conversationMessage.js";
 
 import { generateRecommendation } from "../services/decisionEngine.js";
 import { interpretFarmerMessage } from "../services/ai/interpreter.js";
@@ -214,6 +215,22 @@ export default async function observationRoutes(fastify) {
             status: "awaiting_reply",
             askedAt: new Date(),
           });
+
+          // Save the farmer's original observation.
+await ConversationMessage.create({
+  conversationId: conversation.id,
+  sender: "farmer",
+  message: farmerMessage,
+  channel: "dashboard",
+});
+
+// Save the assistant's clarification question.
+await ConversationMessage.create({
+  conversationId: conversation.id,
+  sender: "assistant",
+  message: question,
+  channel: "dashboard",
+});
 
           return reply.code(201).send({
             success: true,
