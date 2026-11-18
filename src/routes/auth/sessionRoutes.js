@@ -35,8 +35,8 @@ export default async function sessionRoutes(fastify) {
     reply.clearCookie("agrimama_session", {
       path: "/",
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
     });
 
     return reply.code(200).send({
