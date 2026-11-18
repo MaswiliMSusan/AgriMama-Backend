@@ -141,9 +141,16 @@ export default async function farmerAuthRoutes(fastify) {
       );
 
       request.log.error(
-        { requestId: smsResult.requestId },
-        "OTP SMS submission failed"
-      );
+  {
+    diagnostic: "AGRIMAMA_OTP_SMS_FAILURE_V2",
+    smsResult: JSON.parse(JSON.stringify(smsResult)),
+    environment: process.env.AT_ENVIRONMENT,
+    usernameConfigured: Boolean(process.env.AT_USERNAME),
+    apiKeyConfigured: Boolean(process.env.AT_API_KEY),
+    senderIdConfigured: Boolean(process.env.AT_SENDER_ID),
+  },
+  "OTP SMS submission failed"
+);
 
       return reply.code(502).send({
         success: false,

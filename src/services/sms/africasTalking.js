@@ -4,9 +4,7 @@ import AfricasTalking from "africastalking";
 let smsClient;
 
 function getSmsClient() {
-  if (smsClient) {
-    return smsClient;
-  }
+  if (smsClient) return smsClient;
 
   const environment = process.env.AT_ENVIRONMENT || "sandbox";
   const configuredUsername = process.env.AT_USERNAME;
@@ -23,9 +21,7 @@ function getSmsClient() {
   }
 
   if (environment === "sandbox" && configuredUsername !== "sandbox") {
-    throw new Error(
-      'Sandbox mode requires AT_USERNAME="sandbox".'
-    );
+    throw new Error('Sandbox mode requires AT_USERNAME="sandbox".');
   }
 
   if (
@@ -58,18 +54,51 @@ export async function sendSms({ to, message }) {
 
   const recipient = to.trim();
 
-  // Require international phone-number format, e.g. +2547XXXXXXXX.
   if (!/^\+[1-9]\d{7,14}$/.test(recipient)) {
     throw new Error(
       "Recipient must be in international format, e.g. +2547XXXXXXXX."
     );
   }
 
-  const sms = getSmsClient();
+  const environment = process.env.AT_ENVIRONMENT || "sandbox";
+  const senderId = process.env.AT_SENDER_ID?.trim();
 
-  const response = await sms.send({
+  // Require the approved sender in production.
+  if (environment === "production" && !senderId) {
+    throw new Error(
+      "AT_SENDER_ID must be configured in production."
+    );
+  }
+
+  const payload = {
     to: [recipient],
     message: message.trim(),
+  };
+
+  // Match SafeVoice's explicit sender configuration.
+  if (senderId) {
+    payload.from = senderId;
+  }
+
+  const sms = getSmsClient();
+
+  console.info("[AgriMama SMS] Submitting message", {
+    environment,
+    senderIdConfigured: Boolean(senderId),
+    senderId,
+    recipientSuffix: recipient.slice(-4),
+  });
+
+  const response = await sms.send(payload);
+
+  console.info("[AgriMama SMS] Provider response", {
+    message: response?.SMSMessageData?.Message,
+    recipients: response?.SMSMessageData?.Recipients?.map((item) => ({
+      numberSuffix: item.number?.slice(-4),
+      status: item.status,
+      statusCode: item.statusCode,
+      messageId: item.messageId,
+    })),
   });
 
   return response;
