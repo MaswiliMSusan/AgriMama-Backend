@@ -81,7 +81,7 @@ export default async function farmerAuthRoutes(fastify) {
         },
       });
 
-      if (requestCount >= 5) {
+      if (requestCount >= 100) {
         return reply.code(429).send({
           success: false,
           message: "Too many OTP requests. Please try again later.",
@@ -93,7 +93,7 @@ export default async function farmerAuthRoutes(fastify) {
         where: {
           phone,
           createdAt: {
-            [Op.gte]: new Date(Date.now() - 60 * 1000),
+            [Op.gte]: new Date(Date.now() - 10 * 1000),
           },
         },
       });
@@ -176,8 +176,8 @@ export default async function farmerAuthRoutes(fastify) {
     {
       config: {
         rateLimit: {
-          max: 10,
-          timeWindow: "15 minutes",
+          max: 30,
+          timeWindow: "5 minutes",
         },
       },
     },

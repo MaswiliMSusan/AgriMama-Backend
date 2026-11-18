@@ -4,7 +4,7 @@ import { Op } from "sequelize";
 import { AuthOtp } from "../../models/index.js";
 
 const OTP_EXPIRY_MINUTES = 5;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 100;
 
 function validateOtpSecret() {
   if (!process.env.OTP_SECRET || process.env.OTP_SECRET.length < 32) {
