@@ -5,6 +5,10 @@ import formbody from "@fastify/formbody";
 import Farmer from "../models/farmer.js";
 import SmsInboundMessage from "../models/smsInboundMessage.js";
 import { processFarmerMessage } from "../services/messages/processFarmerMessage.js";
+import Conversation from "../models/conversation.js";
+import { processAssistantMessage } from "../services/ai/assistantService.js";
+import { sendFarmerSms } from "../services/sms/sendFarmerSms.js";
+
 
 export default async function inboundSmsRoutes(fastify) {
   await fastify.register(formbody);
@@ -158,49 +162,156 @@ export default async function inboundSmsRoutes(fastify) {
 
       // Call the shared processing service directly. The webhook has
       // already authenticated the provider using the shared webhook token.
-      const result = await processFarmerMessage({
-        fastify,
-        phone: fromPhone,
-        message: messageText,
-        source: "sms_webhook",
-        requestId: request.id,
-      });
+      // Identify the registered farmer.
+const farmer = await Farmer.findOne({
+  where: { phone: fromPhone },
+});
 
-      const responseBody = result.body;
+if (!farmer) {
+  await inbound.update({
+    status: "processed",
+    processedAt: new Date(),
+    errorMessage: null,
+  });
 
-      if (result.statusCode < 200 || result.statusCode >= 300) {
-        await inbound.update({
-          status: "failed",
-          errorMessage: `Message handler returned HTTP ${result.statusCode}`,
-        });
+  return reply.code(200).send({
+    success: true,
+    status: "farmer_not_registered",
+  });
+}
 
-        request.log.warn(
-          {
-            providerMessageId,
-            statusCode: result.statusCode,
-          },
-          "Inbound SMS could not be processed."
-        );
+// Only respond to farmers who have opted in.
+if (farmer.consentStatus !== true) {
+  await inbound.update({
+    status: "processed",
+    processedAt: new Date(),
+    errorMessage: null,
+  });
 
-        return reply.code(500).send({
-          success: false,
-          error: "AgriMama could not process the inbound SMS.",
-        });
-      }
+  return reply.code(200).send({
+    success: true,
+    status: "sms_consent_required",
+  });
+}
 
-      await inbound.update({
-        status: "processed",
-        processedAt: new Date(),
-        errorMessage: null,
-      });
+// Do not generate responses if outbound SMS is disabled.
+if (process.env.AT_SMS_ENABLED !== "true") {
+  await inbound.update({
+    status: "processed",
+    processedAt: new Date(),
+    errorMessage: null,
+  });
 
-      const farmerSms = responseBody.farmerSms ?? responseBody.smsDelivery;
+  request.log.warn(
+    { farmerId: farmer.id },
+    "Inbound SMS received while outbound SMS is disabled."
+  );
+
+  return reply.code(200).send({
+    success: true,
+    status: "sms_disabled",
+  });
+}
+
+// Check whether the farmer is answering an existing
+// farming workflow question, such as crop selection
+// or observation clarification.
+const pendingConversation = await Conversation.findOne({
+  where: {
+    farmerId: farmer.id,
+    status: "awaiting_reply",
+  },
+  order: [["askedAt", "DESC"]],
+});
+
+let farmerSms;
+let processingType;
+
+// Preserve the existing farming workflow when there
+// is an outstanding question.
+if (pendingConversation) {
+  const result = await processFarmerMessage({
+    fastify,
+    phone: fromPhone,
+    message: messageText,
+    source: "sms_webhook",
+    requestId: request.id,
+  });
+
+  if (result.statusCode < 200 || result.statusCode >= 300) {
+    await inbound.update({
+      status: "failed",
+      errorMessage: `Message handler returned HTTP ${result.statusCode}`,
+    });
+
+    return reply.code(500).send({
+      success: false,
+      error: "AgriMama could not process the inbound SMS.",
+    });
+  }
+
+  const responseBody = result.body || {};
+  farmerSms = responseBody.farmerSms ?? responseBody.smsDelivery;
+  processingType = "farming_workflow";
+} else {
+  // No outstanding farming workflow:
+  // continue the farmer's AI Assistant conversation.
+  const assistantConversation = await Conversation.findOne({
+    where: {
+      farmerId: farmer.id,
+      purpose: "ai_assistant",
+    },
+    order: [["updatedAt", "DESC"]],
+  });
+
+  const assistantResult = await processAssistantMessage({
+    fastify,
+    authenticatedUser: {
+      farmerId: farmer.id,
+      role: "farmer",
+    },
+    message: messageText,
+    conversationId: assistantConversation?.id || null,
+    channel: "sms",
+  });
+
+  // Send the AI response through Africa's Talking.
+  farmerSms = await sendFarmerSms({
+    phone: fromPhone,
+    message: assistantResult.message.assistant,
+    requestId: request.id,
+  });
+
+  processingType = "ai_assistant";
+
+  if (!farmerSms.success) {
+    request.log.error(
+      {
+        farmerId: farmer.id,
+        conversationId: assistantResult.conversationId,
+        error: farmerSms.error,
+        statusCode: farmerSms.statusCode,
+      },
+      "AI Assistant response generated but SMS delivery failed."
+    );
+  }
+}
+
+// Record the inbound message as processed.
+// A failed outbound delivery is returned in the response;
+// it should not cause the AI conversation to be generated
+// again when Africa's Talking retries the inbound webhook.
+await inbound.update({
+  status: "processed",
+  processedAt: new Date(),
+  errorMessage: null,
+});
 
 return reply.code(200).send({
   success: true,
   status: "processed",
+  processingType,
   providerMessageId,
-
   farmerSms: farmerSms
     ? {
         status: farmerSms.status ?? "unknown",
